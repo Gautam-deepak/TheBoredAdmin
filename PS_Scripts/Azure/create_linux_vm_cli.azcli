@@ -1,0 +1,52 @@
+# generate ssh-keygen
+ssh-keygen -t rsa -m PEM -b 4096 -C "nova@52.186.72.223"
+
+
+# create a resource group in preferred location
+
+az group create --name myResourceGroup --location eastus
+
+# create a vm 
+
+az vm create \
+  --resource-group myResourceGroup \
+  --name RHEL \
+  --image RHEL \
+  --admin-username nova \
+  --admin-password Pakalu@12345
+  --ge
+
+# Open port 80 for traffic and 443
+
+az vm open-port --port 80 --resource-group myResourceGroup --name myVM
+az vm open-port --resource-group myResourceGroup --name RHEL --port 3389
+
+# ssh 
+ssh azureuser@40.68.254.142
+
+# Install web interface 
+
+sudo apt-get -y update
+sudo apt-get -y install nginx
+
+# clean up resources
+
+az group delete --name myResourceGroup
+
+# username password 
+
+az vm user update \
+    --resource-group "myresourcegroup" \
+    --name "myvm" \
+    --username "nova" \
+    --password "Pakalu@1234"
+
+# assign ssh key ( generate ssh key pair using ssh-keygen)
+
+# ssh-keygen -t rsa -b 4096
+
+    az vm user update \
+        --resource-group "myresourcegroup" \
+        --name "RHEL" \
+        --username "nova" \
+        --ssh-key-value ~/.ssh/nova.pub
