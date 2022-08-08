@@ -67,7 +67,7 @@ $tokenResponse = Invoke-RestMethod https://login.microsoftonline.com/common/oaut
 #$apiurl="https://login.microsoftonline.com/gautamd.onmicrosoft.com/oauth2/token"
 
 #Connect-MgGraph -ClientID YOUR_APP_ID -TenantId YOUR_TENANT_ID -CertificateName YOUR_CERT_SUBJECT
-$mgraph = Connect-MgGraph -ClientID $clientID -TenantId $TenantId -CertificateName $clientcert.Subject
+#$mgraph = Connect-MgGraph -ClientID $clientID -TenantId $TenantId -CertificateName $clientcert.Subject
 
 #Automated sign in
 #install-module -name msal.ps -acceptlicense

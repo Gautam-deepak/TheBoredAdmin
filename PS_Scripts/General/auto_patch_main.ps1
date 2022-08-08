@@ -74,6 +74,7 @@
     9. On one server , saw forcesync to wsus output in console but it shouldn't get to that point , it should exit the script (local logs were fine)(No
     action required )(there was a problem locally with schedule task)
     10. History file is blank on one of the servers , but history file on local one is not blank - (pending)
+    11. Old history file is copied sometimes from local server to remote one - (possible fix - remove old history file from local server at the start of local script)
 
 
 #>

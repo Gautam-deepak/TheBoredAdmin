@@ -19,6 +19,8 @@
     2. Reboot is required before installation - Fixed 
     3. Script won't see the patches which are not downloaded. -pending
     4. When script execution stops, remote machine would wait endlessly - Fixed
+    5. $env:computername which is used to create history file has limit of 15 char, so it can be different than actual hostname. 
+       history file should be created with actual hostname - Pending
 
 #> 
 
