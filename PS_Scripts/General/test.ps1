@@ -526,3 +526,19 @@ $computers=Get-ADDomainController -Filter * | Select-Object hostname -ExpandProp
 
 
 $ErrorActionPreference="Stop"
+
+
+Get-ADComputer -Filter * -Properties * | where-Object {$_.enabled -eq $false -and $_.passwordlastset -le (get-date).adddays(-90)} | `
+
+Select-Object Name,distinguishedname,canonicalname,operatingsystem,operatingsystemversion,passwordlastreset | `
+
+export-csv -Path c:\disabledcomputers.csv -NoTypeInformation -Force
+
+
+$u=Get-ADUser -Filter * -Properties uidnumber | Select-Object uidnumber -ExpandProperty uidnumber | Sort-Object uidnumber -Descending
+
+$g=Get-ADgroup -Filter * -Properties gidnumber | Select-Object gidnumber -ExpandProperty gidnumber | Sort-Object gidnumber -Descending
+
+$f=$u+$g
+
+$f | sort-object

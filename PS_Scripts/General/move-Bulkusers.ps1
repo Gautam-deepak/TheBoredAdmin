@@ -47,16 +47,16 @@ function ConvertFromDN {
 
 # move AD user to different OU
 
-$users=import-csv -Path "C:\Users\30025683\downloads\ou_move.csv"
+$users=import-csv -Path "C:\temp\users.csv"
 
 $results=foreach ($User in $Users)
 {
     Try {
         
-        $OU=$user.path | ConvertFrom-CanonicalUser
-        Move-ADObject -Identity (Get-ADUser -Identity $user.ugdn.Trim()).distinguishedname -TargetPath $user.ou 
+        Set-ADObject -Identity (Get-ADUser -Identity $User.ugdn.trim()) -ProtectedFromAccidentalDeletion $false 
+        Move-ADObject -Identity (Get-ADUser -Identity $user.ugdn.Trim()).distinguishedname -TargetPath $user.ou -Confirm:$false
 
-        $status="Move"
+        $status="Moved"
         $issue="none"
         
 
@@ -76,6 +76,7 @@ $results=foreach ($User in $Users)
     'Status'=$status
     'Error'=$issue
     }
+    
 }
 
 $results | Export-Csv c:\temp\results.csv -NoTypeInformation -Force
