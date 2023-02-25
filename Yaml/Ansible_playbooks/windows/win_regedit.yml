@@ -1,0 +1,17 @@
+---
+- hosts: all
+  tasks:
+
+  - name: Create Registry Entry FileNotFoundCacheEntriesMax
+    win_regedit:
+      path: HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters
+      name: FileNotFoundCacheEntriesMax
+      data: 2000
+      type: dword
+
+  - name: Update Existing Registry Entry RequireSecuritySignature
+    win_regedit:
+      path: HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters
+      name: RequireSecuritySignature
+      data: 1
+      type: dword

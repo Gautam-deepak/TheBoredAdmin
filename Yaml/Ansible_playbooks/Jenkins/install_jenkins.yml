@@ -1,0 +1,28 @@
+- name: Install Jenkins agent on Windows
+  hosts: all
+
+  vars:
+    jenkins_url: "http://10.25.101.73:8080"
+    agent_name: "{{ Inventory_hostname }}"
+    agent_secret: "a2ce5f2245d027a89245552daf5b7cdde65b087b376e7ed1d27fec003ec87eff"
+    agent_home: "C:\jenkins\agent"
+    agent_service_name: "jenkins-agent"
+
+  tasks:
+  - name: Install Java
+    win_chocolatey:
+      name: openjdk
+      state: present
+
+  - name: Download Jenkins agent JAR
+    win_get_url:
+      url: "http://10.25.101.73:8080/jnlpJars/agent.jar"
+      dest: "{{ agent_home }}/agent.jar"
+
+  - name: Create agent service
+    win_service:
+      name: "{{ agent_service_name }}"
+      binary_path_name: "{{ agent_home }}\\agent.jar"
+      start_mode: delayed-auto
+      state: started
+      args: '"-jnlpUrl {{ jenkins_url }}/computer/{{ agent_name }}/slave-agent.jnlp -secret {{ agent_secret }}"'

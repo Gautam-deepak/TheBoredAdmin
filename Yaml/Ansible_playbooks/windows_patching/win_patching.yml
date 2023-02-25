@@ -1,0 +1,33 @@
+---
+- hosts: all
+  name: Windows Patching playbook
+  user: root
+  become: yes
+  gather_facts: true
+  vars:
+    current_date: "{{ lookup('pipe', 'date +%Y%m%d-%H%M%S') }}"
+    logs_folder: '{{ playbook_dir }}/logs'
+    datewise: '{{ logs_folder }}/{{ current_date }}'
+    reports: '{{ datewise }}/reports'
+    results: '{{ datewise }}/results'
+    patching_status: '{{ datewise }}/patching_status'
+    failed: '{{ patching_status }}/failed.txt'
+    patched: '{{ patching_status }}/patched.txt'
+    allhosts: '{{ patching_status }}/allhosts.txt'
+    allhosts_temp: '{{ patching_status }}/allhosts_temp.txt'
+    failed_unreachable: '{{ patching_status }}/failed_unreachable.txt'
+    logs: '{{ reports }}/installed_patches.log'
+    hotfix_destination: '{{ reports }}/{{ inventory_hostname }}_hotfix.csv'
+    hotfix_source: 'C:\hotfix.csv'
+    logs_source: 'C:\windows_updates-{{ inventory_hostname }}.txt'
+    logs_destination: '{{ reports }}/{{ inventory_hostname }}_updatelogs.txt'
+    patch_report: '{{ inventory_hostname }}'    
+  pre_tasks:
+    - debug: msg="Begining of patching updates on windows servers"
+  roles:
+    - ansible-role-win_pending_reboot
+    - Pre_Patching
+    - Patching
+    - Post_Patching
+  post_tasks:
+    - debug: msg="Patch update completed successfully"

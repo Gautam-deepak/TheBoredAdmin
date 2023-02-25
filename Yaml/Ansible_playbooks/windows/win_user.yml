@@ -1,0 +1,17 @@
+---
+- hosts: all
+  tasks:
+
+  - name: Create new local account
+    win_user:
+      name: "test_user01"
+      fullname: "test_user01 testing"
+      password: "Password"
+      state: present
+      groups:
+        - Administrators
+
+  - name: Ensure test_user02 does not exist
+    win_user:
+      name: test_user02
+      state: absent

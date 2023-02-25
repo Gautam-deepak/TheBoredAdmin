@@ -1,0 +1,73 @@
+    # Patching main
+  
+  - name: Install all available patches
+    win_updates:
+      category_names:
+        - Security Updates
+        - Critical Updates
+        - Updates
+        - Windows Server 2016
+        - Windows Server 2019
+      reboot: yes
+      reboot_timeout: 900
+      log_path: "{{ logs_source }}"
+    register: update_count
+  
+  - name: collect patch report back to ansible server
+    fetch:
+     src: "{{ logs_source }}"
+     dest: "{{ log_path }}/reports/patch-report-{{ inventory_hostname }}.txt"
+     flat: yes
+
+  - name: Generating patch report
+    run_once: yes
+    delegate_to: localhost
+    shell: "cat {{ log_path }}/reports/patch-report-*.txt >> {{ log_path }}/results/final-patch-report.txt"
+  
+  - name: Read Patch report file content
+    shell: cat final-patch-report.txt
+    args:
+      chdir: '{{ log_path }}/results'
+    delegate_to: localhost
+    run_once: yes
+    register: patchreport
+  
+  - name: Print patch report file content
+    debug:
+      var: patchreport.stdout_lines
+    run_once: yes
+    
+  - name: Print update_count
+    debug: 
+      var: update_count
+  
+  - name: Copy Installed patches to a file
+    local_action:
+      module: copy
+      content: "{{update_count | to_json}}"
+      dest: "{{ log_path }}/reports/installed_patches.log"
+      
+  - name: Print installed patches count
+    debug:
+      msg: "No. of patches installed on {{ inventory_hostname }} : {{ update_count.installed_update_count }}"
+    ignore_errors: true
+  
+  - name: Checking if there are pending updates
+    win_shell: get-windowsupdate
+    register: pending_updates
+  
+  - name: Printing pending updates
+    debug:
+      var: pending_updates
+
+  - name: Printing if there are no pending updates
+    debug:
+      msg: "The server {{ inventory_hostname }} is successfully patched and there are no pending updates."
+    when: pending_updates.stdout_lines == []
+    ignore_errors: true
+    
+  - name: Printing if some updates are left to be installed
+    debug:
+      msg: "The server {{ inventory_hostname }} is not fully patched."
+    when: pending_updates.stdout_lines != []
+    ignore_errors: true

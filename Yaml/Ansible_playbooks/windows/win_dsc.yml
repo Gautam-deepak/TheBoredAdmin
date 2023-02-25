@@ -1,0 +1,64 @@
+---
+- hosts: all
+  tasks:
+  
+  - name: Configure the winrm Service
+    win_service:
+      name: winrm
+      state: started
+      start_mode: auto
+      
+  - name: Verify the WSMan HTTP listener is active and configured correctly
+    win_shell: |
+        $port = (Get-Item -LiteralPath WSMan:\localhost\Client\DefaultPorts\HTTP).Value
+        $onlinePorts = @(Get-ChildItem -LiteralPath WSMan:\localhost\Listener |
+        Where-Object { 'Transport=HTTP' -in $_.Keys } |
+        Get-ChildItem |
+        Where-Object Name -eq Port |
+        Select-Object -ExpandProperty Value)
+
+        if ($port -notin $onlinePorts) {
+            "The default client port $port is not set up as a WSMan HTTP listener, win_dsc will not work."
+        }
+  # This will work if remote windows machine have access to Internet
+ 
+  - name: Powershell | Install Required Powershell Modules
+    win_psmodule:
+      name: xActiveDirectory
+      state: present
+    ignore_errors: yes
+
+  # In case remote windows machines do not have access to internet , Install powershell core on ansible server and try this method
+    
+  - name: Download and save the module on ansible server
+    shell: |
+      [Net.ServicePointManager]::SecurityProtocol = "tls12";
+      save-module -name xActiveDirectory -path /ansible/modules/ -force
+    args:
+      executable: /usr/bin/pwsh
+    register: pwshrequest
+    delegate_to: localhost
+    run_once: yes
+  
+  - name: Copy the downloaded module to remote windows machines
+    win_copy:
+      src: /ansible/modules/xActiveDirectory
+      dest: c:\windows\system32\windowspowershell\1.0\modules
+
+  # Inputs taken from https://github.com/mcollera/xActiveDirectory
+  
+  - name: Create Test Account
+    win_dsc:
+      resource_name:  xADUser
+      DomainName: springfield.local
+      UserName: "test_user"
+      Password_password: "P@ssword!"
+      Password_username: "dummy"
+      Ensure: present
+      Path: "OU=Users,OU=HQ,DC=springfield,DC=local"
+      DisplayName:  "Test User"
+      GivenName:  "Test"
+      Surname: "User"
+      UserPrincipalName: "test_user@springfield.local"
+      Enabled:  true
+      PasswordNeverExpires: true

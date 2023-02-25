@@ -1,0 +1,17 @@
+---
+- name: Test Playbook
+  hosts: all
+  gather_facts: false
+  vars:
+    source: 'C:\hotfix.csv'
+    destination: '/ansible/win-patching/{{ inventory_hostname }}_hotfix.csv'
+  tasks:
+
+  - name: Run shell
+    win_shell: Get-HotFix | Select-Object Pscomputername,description,hotfixid,installedby,installedon |Where-Object {$_.installedon -gt (get-date).AddDays(-50)} | Export-Csv -NoTypeInformation -Force C:\hotfix.csv
+
+  - name: copy file
+    fetch:
+      src: "{{ source }}"
+      dest: "{{ destination }}"
+      flat: yes

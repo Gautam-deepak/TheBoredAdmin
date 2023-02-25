@@ -1,0 +1,41 @@
+---
+- hosts: all
+  tasks:
+
+  - name: Single line PowerShell
+    win_shell: Set-Content -Path C:\temp\test.txt -Value 'Hello there. '
+
+  - name: Run multi-lined shell commands
+    win_shell: |
+        $text = Get-Content C:\Temp\test.txt
+        $text += ' General Kenobi....you are a bold one'
+        Set-Content -Path C:\Temp\test2.txt -Value $text
+  - name: Copy a single file
+    win_copy:
+      src: "{{ playbook_dir }}/files/test-output.ps1"
+      dest: C:\Temp\test-output.ps1
+
+  - name: Run a script
+    win_shell: C:\Temp\test-output.ps1
+    register: result
+
+  - debug: var=result.stdout_lines
+  
+# Content of test-output.ps1
+
+# Requires -RunAsAdministrator
+# $ErrorActionPreference ='Stop'
+
+# Get a service which doesn't exist
+# try {
+#    Get-Service "This will fail"
+# }
+# catch {
+
+#    Write-Error "Unable find service" -ErrorAction Continue
+#    Write-Error $_.Exception.Message -ErrorAction Continue
+#    exit 1
+# }
+
+
+# exit 0

@@ -1,0 +1,59 @@
+---
+- name: Windows patching playbook
+  hosts: windows
+  gather_facts: false
+  tasks:
+    - name: Check if server is reachable
+      win_ping:
+      register: ping_result
+
+    - name: Exit if server is unreachable
+      local_action: copy content=Server unreachable. to=unreachable.txt
+      when: ping_result.failed
+
+    - name: Check if patches are available
+      win_updates:
+      register: patches_result
+
+    - name: Exit if no patches are available
+      local_action: copy content=Server already patched. to=patched.txt
+      when: patches_result.update_count == 0
+
+    - name: Check if reboot is required
+      win_reboot:
+      register: reboot_result
+
+    - name: Reboot server
+      win_reboot:
+      when: reboot_result.reboot_required
+
+    - name: Wait for server to be reachable after reboot
+      local_action: wait_for host={{ inventory_hostname }} port=5985 state=started
+      register: wait_result
+      until: wait_result.elapsed >= 300
+      retries: 10
+
+    - name: Exit if server is not reachable after reboot
+      local_action: copy content=Server unreachable after reboot. to=reboot_loop.txt
+      when: wait_result.failed
+
+    - name: Install patches
+      win_updates:
+      when: reboot_result.reboot_required == False
+
+    - name: Check if patches are installed successfully
+      win_updates:
+      register: patches_installed_result
+
+    - name: Exit if patches are not installed successfully
+      local_action: copy content=Patches installation failed. to=failure.txt
+      when: patches_installed_result.update_count > 0
+
+    - name: Save list of installed patches
+      win_command:
+        cmd: powershell.exe -Command "Get-HotFix | Select-Object -Property InstalledOn,HotFixID,Description | Export-Csv -Path history.csv"
+      when: patches_installed_result.update_count == 0
+
+    - name: Exit with success message
+      local_action: copy content=Patches installed successfully. to=patched.txt
+      when: patches_installed_result.update_count == 0

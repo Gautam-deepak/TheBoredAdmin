@@ -1,0 +1,15 @@
+---
+all:
+  hosts:
+    10.25.101.77:
+      ansible_shell_type: cmd
+      ansible_host: 10.25.101.77
+      ansible_user: root
+    10.25.101.76:
+      ansible_shell_type: cmd
+      ansible_host: 10.25.101.76
+      ansible_user: root
+    10.25.101.78:
+      ansible_shell_type: cmd
+      ansible_host: 10.25.101.78
+      ansible_user: root
