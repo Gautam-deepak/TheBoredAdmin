@@ -1,6 +1,6 @@
-    # Post Patching main
+# Post Patching main
   
-  - name: Update failed servers file
+  - name: Control Node | Update failed servers file
     local_action:
       module: lineinfile
       path: "{{ log_path }}/patching_status/failed.txt"
@@ -10,7 +10,7 @@
     when: pending_updates.stdout_lines != []
     ignore_errors: true
     
-  - name: Update patched servers file
+  - name: Control Node | Update patched servers file
     local_action:
       module: lineinfile
       path: "{{ log_path }}/patching_status/patched.txt"
@@ -20,44 +20,44 @@
     when: pending_updates.stdout_lines == []
     ignore_errors: true
 
-  - name: Checking last reboot time
+  - name: Managed Node | Checking last reboot time
     win_shell: Get-CimInstance -ComputerName localhost -Class CIM_OperatingSystem -ErrorAction Stop | Select-Object CSName, LastBootUpTime
     register: lastbootuptime
 
-  - name: Printing last boot uptime
+  - name: Control Node | Printing last boot uptime of managed nodes
     debug:
       var: lastbootuptime.stdout_lines[3]
   
-  - name: Generate hotfix information on windows
+  - name: Managed Node | Generate hotfix information of last 24 hrs
     win_shell: |
       Get-HotFix | Select-Object Pscomputername,description,hotfixid,installedby,installedon | `
-      Where-Object {$_.installedon -gt (get-date).Addhours(-50)} | Export-Csv -NoTypeInformation -Force C:\hotfix.csv
+      Where-Object {$_.installedon -gt (get-date).Addhours(-24)} | Export-Csv -NoTypeInformation -Force C:\hotfix.csv
 
-  - name: Collect hotfix information from windows
+  - name: Managed Node | Collect hotfix information
     fetch:
       src: "{{ hotfix_source }}"
       dest: '{{ log_path }}/reports/{{ inventory_hostname }}_hotfix.csv'
       flat: yes
 
-  - name: Generating hotfix final report locally
+  - name: Control Node | Generating hotfix final report
     run_once: yes
     delegate_to: localhost
     shell: "cat reports/*_hotfix.csv >> results/final-hotfix.csv"
     args:
       chdir: "{{ log_path }}"
       
-  - name: Read final hotfix report
+  - name: Control Node | Read final hotfix report's content
     run_once: yes
     delegate_to: localhost
     shell: "cat {{ log_path }}/results/final-hotfix.csv"
     register: finalhotfix
   
-  - name: Print final hotfix report
+  - name: Control Node | Print final hotfix report's content
     debug: 
       var: finalhotfix.stdout_lines
     run_once: yes
     
-  - name: Clean-up previous log files from windows client
+  - name: Managed Node | Clean-up previous log files from windows client
     win_file:
       path: "{{ item }}"
       state: absent
@@ -65,7 +65,7 @@
       - '{{ logs_source }}'
       - '{{ hotfix_source }}'
       
-  - name: Create sorted file allhosts and patched on ansible server
+  - name: Control Node | Create sorted allhosts and patched files
     shell: sort allhosts.txt > sorted_allhosts.txt;
           sort patched.txt > sorted_allpatched.txt;
     args:
@@ -73,7 +73,7 @@
     delegate_to: localhost
     run_once: yes
     
-  - name: Create failed-unreachable file on ansible server
+  - name: Control Node | Create failed-unreachable file
     shell: comm -23 sorted_allhosts.txt sorted_allpatched.txt > failed_unreachable.txt;
           rm -rf sorted_allhosts.txt sorted_allpatched.txt
     args:
@@ -81,7 +81,7 @@
     delegate_to: localhost
     run_once: yes
   
-  - name: Read allhosts file content
+  - name: Control Node | Read allhosts file's content
     shell: cat allhosts.txt
     args:
       chdir: '{{ log_path }}/patching_status'
@@ -89,12 +89,12 @@
     run_once: yes
     register: allhostsfile
   
-  - name: Print allhosts file content
+  - name: Control Node | Print allhosts file's content
     debug: 
       var: allhostsfile.stdout_lines
     run_once: yes
     
-  - name: Read patched file content
+  - name: Control Node | Read patched file's content
     shell: cat patched.txt
     args:
       chdir: '{{ log_path }}/patching_status'
@@ -102,12 +102,12 @@
     run_once: yes
     register: patchedfile
   
-  - name: Print patched file content
+  - name: Control Node | Print patched file's content
     debug: 
       var: patchedfile.stdout_lines
     run_once: yes
     
-  - name: Read failed_unreachable file content
+  - name: Control Node | Read failed_unreachable file's content
     shell: cat failed_unreachable.txt
     args:
       chdir: '{{ log_path }}/patching_status'
@@ -115,7 +115,7 @@
     run_once: yes
     register: failed_unreachablefile
   
-  - name: Print failed_unreachable file content
+  - name: Control Node | Print failed_unreachable file's content
     debug: 
       var: failed_unreachablefile.stdout_lines
     run_once: yes
