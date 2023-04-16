@@ -6,7 +6,7 @@
   gather_facts: true
   vars:
     current_date: "{{ lookup('pipe', 'date +%Y%m%d-%H%M%S') }}"
-    logs_folder: '/home/itoc_ansible_admin/logs'
+    logs_folder: '{{ playbook_dir }}/logs'
     datewise: '{{ logs_folder }}/Win_Patching_{{ current_date }}'
     hotfix_source: 'C:\hotfix.csv'
     logs_source: 'C:\windows_updates-{{ inventory_hostname }}.txt'
@@ -31,10 +31,8 @@
       force: yes
       state: directory
       mode: 0755
-      owner: itoc_ansible_admin
     run_once: yes
     register: datewise
-    become: yes
     
   - name: Control Node | Set path variable for the log folder 
     set_fact:
@@ -48,13 +46,11 @@
       force: yes
       state: directory
       mode: 0755
-      owner: itoc_ansible_admin
     with_items:
       - '{{ log_path }}/reports'
       - '{{ log_path }}/results'
       - '{{ log_path }}/patching_status'
     run_once: yes
-    become: yes
 
   - name: Control Node | create temp all hosts file in ansible controller
     template:
@@ -63,8 +59,6 @@
     delegate_to: localhost
     vars:
       my_variable: '{{ ansible_play_hosts_all }}'
-    become: yes
-    become_user: root
     
   - name: Control Node | create all hosts file in ansible controller
     shell: cat allhosts_temp.txt | sed "s/\[u'//g; s/', u'/\n/g; s/'\]//g" >> allhosts.txt;
@@ -73,7 +67,6 @@
       chdir: "{{ log_path }}/patching_status"
     delegate_to: localhost
     run_once: yes
-    become: yes
     
   - name: Managed Node | Clean-up previous log files
     win_file:
@@ -98,27 +91,28 @@
       - ssh-agent
     ignore_errors: yes
     
+  - name: Managed Node | Install PSWindowsUpdate PowerShell module 
+    win_psmodule: 
+      name: PswindowsUpdate
+      state: Present
+  
   - name: Managed Node | Getting pending reboot status
     win_pending_reboot:
     register: pending_reboot
-
+  
   - name: Control Node | Print Pending_reboot variable
     debug:
       var: pending_reboot
-
+      
   - name: Control Node | Print reboot status of windows machines
-    debug:
+    debug: 
       msg: Initial Reboot is required on the server {{ inventory_hostname }}
     when: pending_reboot.reboot_required == true
-
+  
   - name: Managed Node | Reboot server if required
-    win_shell: restart-computer -force``
+    win_reboot:
+      reboot_timeout: 900
     when: pending_reboot.reboot_required == true
-
-  - name: Managed Node | Wait for connection
-    wait_for_connection:
-      delay: 5
-      timeout: 600
   
     # Patching main
   
@@ -130,7 +124,6 @@
         - Updates
         - Windows Server 2016
         - Windows Server 2019
-        - Windows Server 2012 R2
       reboot: yes
       reboot_timeout: 900
       log_path: "{{ logs_source }}"
@@ -144,13 +137,11 @@
      src: "{{ logs_source }}"
      dest: "{{ log_path }}/reports/patch-report-{{ inventory_hostname }}.txt"
      flat: yes
-    become: yes
 
   - name: Control Node | Generating final Patch report
     run_once: yes
     delegate_to: localhost
     shell: "cat {{ log_path }}/reports/patch-report-*.txt >> {{ log_path }}/results/final-patch-report.txt"
-    become: yes
   
   - name: Control Node | Read Final Patch report's content
     shell: cat final-patch-report.txt
@@ -174,26 +165,31 @@
       module: copy
       content: "{{update_count | to_json}}"
       dest: "{{ log_path }}/reports/installed_patches.log"
-    become: yes
-    become_user: root
-    
+      
   - name: Control Node | Print installed patches count of managed nodes
     debug:
       msg: "No. of patches installed on {{ inventory_hostname }} : {{ update_count.installed_update_count }}"
     ignore_errors: true
+  
+  - name: Managed Nodes | Checking if there are pending updates
+    win_shell: get-windowsupdate
+    register: pending_updates
+  
+  - name: Control Node | Printing pending updates
+    debug:
+      var: pending_updates
 
   - name: Control Node | Printing if there are no pending updates
     debug:
       msg: "The server {{ inventory_hostname }} is successfully patched and there are no pending updates."
-    when: update_count.found_update_count == update_count.installed_update_count
+    when: pending_updates.stdout_lines == []
     ignore_errors: true
-
+    
   - name: Control Node | Printing if some updates are left to be installed
     debug:
       msg: "The server {{ inventory_hostname }} is not fully patched."
-    when: update_count is undefined or update_count.found_update_count != update_count.installed_update_count
+    when: pending_updates.stdout_lines != []
     ignore_errors: true
-
     
     # Post Patching main
   
@@ -204,9 +200,8 @@
       insertafter: EOF
       line: "{{ inventory_hostname }}"
       create: yes
-    when: update_count is undefined or update_count.found_update_count != update_count.installed_update_count
+    when: pending_updates.stdout_lines != []
     ignore_errors: true
-    become: yes
     
   - name: Control Node | Update patched servers file
     local_action:
@@ -215,9 +210,8 @@
       insertafter: EOF
       line: "{{ inventory_hostname }}"
       create: yes
-    when: update_count.found_update_count == update_count.installed_update_count
+    when: pending_updates.stdout_lines == []
     ignore_errors: true
-    become: yes
 
   - name: Managed Node | Checking last reboot time
     win_shell: Get-CimInstance -ComputerName localhost -Class CIM_OperatingSystem -ErrorAction Stop | Select-Object CSName, LastBootUpTime
@@ -237,7 +231,6 @@
       src: "{{ hotfix_source }}"
       dest: '{{ log_path }}/reports/{{ inventory_hostname }}_hotfix.csv'
       flat: yes
-    become: yes
 
   - name: Control Node | Generating hotfix final report
     run_once: yes
@@ -245,7 +238,6 @@
     shell: "cat reports/*_hotfix.csv >> results/final-hotfix.csv"
     args:
       chdir: "{{ log_path }}"
-    become: yes
       
   - name: Control Node | Read final hotfix report's content
     run_once: yes
@@ -273,7 +265,6 @@
       chdir: "{{ log_path }}/patching_status"
     delegate_to: localhost
     run_once: yes
-    become: yes
     
   - name: Control Node | Create failed-unreachable file
     shell: comm -23 sorted_allhosts.txt sorted_allpatched.txt > failed_unreachable.txt;
@@ -282,7 +273,6 @@
       chdir: "{{ log_path }}/patching_status"
     delegate_to: localhost
     run_once: yes
-    become: yes
   
   - name: Control Node | Read allhosts file's content
     shell: cat allhosts.txt

@@ -1,0 +1,44 @@
+---
+- name: Post_CIS_benchmark
+  hosts: all
+  user: root
+  become: yes
+  become_method: runas  
+  become_user: hpe-cscitoc.net\itoc_ansible_admin
+
+  gather_facts: true  
+  vars:
+    allow_world_readable_tmpfiles: true
+  
+  tasks:
+
+  - name: Firewall rule to allow SMB 445 on TCP port
+    win_firewall_rule:
+      name: SMB
+      localport: 445
+      action: allow
+      direction: in
+      protocol: tcp
+      state: present
+      enabled: yes
+<<<<<<< HEAD
+    become: yes
+=======
+    become: true
+>>>>>>> main
+
+  - name: Firewall rule to allow user application on TCP port
+    win_firewall_rule:
+      name: user application port
+      localport: 1234
+      action: allow
+      direction: in
+      protocol: tcp
+      state: present
+      enabled: yes
+<<<<<<< HEAD
+    become: yes
+=======
+    become: true
+>>>>>>> main
+

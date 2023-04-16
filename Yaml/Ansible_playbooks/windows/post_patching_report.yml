@@ -1,0 +1,65 @@
+---
+- hosts: all
+  name: Collect lastbootuptime,Hotfix info and c drive details post patching
+  gather_facts: true
+  become_method: runas
+  become_user: hpe-cscitoc.net\itoc_ansible_admin
+
+  vars:
+    report_source: 'c:\post_patching_info.csv'
+    log_path: '/home/itoc_ansible_admin/logs'
+
+  tasks:
+
+    - name: Control Node | Run Powershell to collect info
+      win_shell: |
+        $lastbootuptime = Get-WmiObject win32_operatingsystem | `
+        select @{LABEL=’LastBootUpTime’;EXPRESSION={$_.ConverttoDateTime($_.lastbootuptime)}} |`
+        Select-Object lastbootuptime -ExpandProperty lastbootuptime
+
+        $hotfixinfo = (Get-HotFix | Sort-Object InstalledOn -Descending)[0]
+
+        $Cinfo = Get-PSDrive -Name C
+
+        $result = [pscustomobject]@{
+          'Machine' = $hotfixinfo.pscomputername
+          'Last Boot time' = $lastbootuptime
+          'hotifix ID' = $hotfixinfo.hotfixID
+          'Description of Hotfix' = $hotfixinfo.description
+          'Installed by' = $hotfixinfo.installedby
+          'Installed on' = $hotfixinfo.InstalledOn
+          'Drive name' = $Cinfo.Name
+          'Total' = [int]($cinfo| Select-Object @{Label="Total";Expression={(($_.free+$_.used)/1073741824)}}).total
+          'Used' = [int]($cinfo | Select-Object @{Label="Used";Expression={(($_.used)/1073741824)}}).used
+          'Free' = [int]($cinfo | Select-Object @{Label="free";Expression={(($_.free)/1073741824)}}).free
+        }
+
+        $result | Export-Csv -Path c:\post_patching_info.csv -NoTypeInformation -force
+      register: psresult
+      become: yes
+   
+    - name: Managed Node | Collect report information
+      fetch:
+        src: "{{ report_source }}"
+        dest: '{{ log_path }}/{{ inventory_hostname }}_post_patching.csv'
+        flat: yes
+      become: yes
+
+    - name: Control Node | Generating final report
+      run_once: yes
+      delegate_to: localhost
+      shell: "cat *_post_patching.csv >> final-postpatching.csv"
+      args:
+        chdir: "{{ log_path }}"
+      become: yes
+
+    - name: Control Node | Read final report's content
+      run_once: yes
+      delegate_to: localhost
+      shell: "cat {{ log_path }}/final-postpatching.csv"
+      register: finalpostpatching
+
+    - name: Control Node | Print final report's content
+      debug:
+        var: finalpostpatching.stdout_lines
+      run_once: yes

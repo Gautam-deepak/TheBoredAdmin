@@ -1,5 +1,5 @@
 # PrePatching main
-
+    
   - name: Control Node | Create datewise log folder for the playbook
     local_action:
       module: file
@@ -7,14 +7,16 @@
       force: yes
       state: directory
       mode: 0755
+      owner: itoc_ansible_admin
     run_once: yes
     register: datewise
-
-  - name: Control Node | Set path variable for the log folder
+    become: yes
+    
+  - name: Control Node | Set path variable for the log folder 
     set_fact:
       log_path: '{{ datewise.path }}'
     run_once: yes
-
+     
   - name: Control Node | Create internal logs folder inside datewise
     local_action:
       module: file
@@ -22,11 +24,13 @@
       force: yes
       state: directory
       mode: 0755
+      owner: itoc_ansible_admin
     with_items:
       - '{{ log_path }}/reports'
       - '{{ log_path }}/results'
       - '{{ log_path }}/patching_status'
     run_once: yes
+    become: yes
 
   - name: Control Node | create temp all hosts file in ansible controller
     template:
@@ -35,7 +39,9 @@
     delegate_to: localhost
     vars:
       my_variable: '{{ ansible_play_hosts_all }}'
-
+    become: yes
+    become_user: root
+    
   - name: Control Node | create all hosts file in ansible controller
     shell: cat allhosts_temp.txt | sed "s/\[u'//g; s/', u'/\n/g; s/'\]//g" >> allhosts.txt;
            rm -rf allhosts_temp.txt
@@ -43,7 +49,8 @@
       chdir: "{{ log_path }}/patching_status"
     delegate_to: localhost
     run_once: yes
-
+    become: yes
+    
   - name: Managed Node | Clean-up previous log files
     win_file:
       path: "{{ item }}"
@@ -51,12 +58,12 @@
     with_items:
       - '{{ logs_source }}'
       - '{{ hotfix_source }}'
-
+      
   - name: Managed Node | copy template to destination windows servers
     template:
       src: patch-report-template.j2
       dest: "{{ logs_source }}"
-
+  
   - name: Managed Node | Configure the windows update and ssh service
     win_service:
       name: "{{ item }}"
@@ -66,7 +73,7 @@
       - wuauserv
       - ssh-agent
     ignore_errors: yes
-
+    
   - name: Managed Node | Getting pending reboot status
     win_pending_reboot:
     register: pending_reboot
@@ -84,7 +91,12 @@
     win_shell: restart-computer -force
     when: pending_reboot.reboot_required == true
 
+  - name: Managed Node | Initiate a pause for reboot
+    pause:
+      minutes: 1
+    when: pending_reboot.reboot_required == true
+
   - name: Managed Node | Wait for connection
     wait_for_connection:
       delay: 5
-      timeout: 600
+      timeout: 1200
