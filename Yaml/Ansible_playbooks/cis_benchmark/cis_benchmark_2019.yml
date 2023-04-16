@@ -1,0 +1,10 @@
+---
+- name: Apply CIS benchmarks to Windows Server 2019
+  hosts: all
+  become: true
+  become_method: runas
+  become_user: hpe-cscitoc.net\itoc_ansible_admin
+
+  roles:
+    - Windows-2019-CIS
+

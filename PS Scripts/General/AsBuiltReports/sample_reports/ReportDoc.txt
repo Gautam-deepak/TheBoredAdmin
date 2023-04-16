@@ -1,0 +1,21 @@
+Summary Host Usage Report for All Locations
+Cell marked red means that there is not enough resource to handle a host failure
+
+Host Usage for GEO
+------------------------------------------------------------------------------------------------------------------------
+Process Name         PID   Working Set
+------------         ---   -----------
+ai                   20896 14082048
+AppHelperCap         2528  14925824
+ApplicationFrameHost 3448  38592512
+armsvc               1952  3305472
+arubanetsvc          5944  6221824
+audiodg              3272  23126016
+CalculatorApp        14532 2371584
+CcmExec              17404 48676864
+chrome               392   26677248
+chrome               1664  218382336
+Contents
+------------------------------------------------------------------------------------------------------------------------
+Host Usage for GEO
+

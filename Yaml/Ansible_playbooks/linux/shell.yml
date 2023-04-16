@@ -1,0 +1,14 @@
+---
+- name: Execute Shell Script from GitLab
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    
+    - name: Execute Shell Script
+      command: sh -x /var/lib/awx/projects/testing.sh "{{ playbook_hosts | join(',') }}"
+      run_once: yes
+      register: shell_output
+
+    - name: Print shell output
+      debug:
+        var: shell_output.stdout_lines

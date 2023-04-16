@@ -1,0 +1,62 @@
+{
+    "Report": {
+        "Name": "Microsoft AD As Built Report",
+        "Version": "1.0",
+        "Status": "Released",
+        "ShowCoverPageImage": true,
+        "ShowTableOfContents": true,
+        "ShowHeaderFooter": true,
+        "ShowTableCaptions": true
+    },
+    "Options": {
+        "ShowDefinitionInfo": false,
+        "PSDefaultAuthentication": "Negotiate",
+        "Exclude": {
+            "Domains": [],
+            "DCs": []
+        }
+    },
+    "InfoLevel": {
+        "_comment_": "0 = Disabled, 1 = Enabled, 2 = Adv Summary, 3 = Detailed",
+        "Forest": 1,
+        "Domain": 1,
+        "DHCP": 1,
+        "DNS": 1,
+        "CA": 2
+    },
+    "HealthCheck": {
+        "Domain": {
+            "GMSA": true,
+            "GPO": true,
+            "Backup": true,
+            "DFS": true,
+            "SPN": true,
+            "DuplicateObject": true,
+            "Security": true
+        },
+        "DomainController": {
+            "Diagnostic": true,
+            "Services": true,
+            "Software": true
+        },
+        "Site": {
+            "Replication": true,
+            "BestPractice": true
+        },
+        "DNS": {
+            "Aging": true,
+            "DP": true,
+            "Zones": true
+        },
+        "DHCP": {
+            "Summary": true,
+            "Credential": true,
+            "Statistics": true,
+            "BP": true
+        },
+        "CA": {
+            "Status": true,
+            "Statistics": true
+        }
+    }
+}

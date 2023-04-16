@@ -2709,7 +2709,6 @@ function HealthButtonClick( $object ){
                 $csvresults=foreach($iloIP in $iloIPs){
 
                     try{
-
                         $connection=connect-hpeilo $iloIP -username $user -password $password `
                         -warningaction ignore
                         $healthinfo=Get-HPEiLOHealthSummary -connection $connection
@@ -2737,11 +2736,10 @@ function HealthButtonClick( $object ){
                         $healthinfo.NetworkStatus+","+$healthinfo.PowerSuppliesStatus+","+$healthinfo.PowerSuppliesRedundancy+","+`
                         $healthinfo.PowerSuppliesMismatch+","+$healthinfo.ProcessorStatus+","+$healthinfo.StorageStatus+","+`
                         $healthinfo.TemperatureStatus+","+$healthinfo.Status+","+$Issue)
-
                         $ProgressBar.PerformStep()
                     }
                     catch{
-                        if(Error[0].Exception.Message -match  `
+                        if($Error[0].Exception.Message -match  `
                         "The underlying connection was closed: Could not establish trust relationship for the SSL/TLS secure channel."`
                         -or $Error[0].Exception.Message -match "The SSL connection could not be established, see inner exception"){
                             try {
@@ -2889,7 +2887,6 @@ function HealthButtonClick( $object ){
                 else{
                     $ProgressBar.Value=0
                     $outputtextbox.ForeColor="Red"
-                    $outputtextbox.text="IP validation failed..."
                     Write-myLog -level ERROR -messages "IP validation failed"
                     Write-myLog -level ERROR -messages $ipvalidationmessages
                     $outputtextbox.AppendText("`n")
@@ -4629,9 +4626,16 @@ Function test-iloIP{
             if([string]::IsNullOrEmpty($ilotextfile)){
                 throw
             }
-            for($i=0;$i -lt $ilotextfile.Length;$i++){
-                if($ilotextfile[$i] -notmatch $ipv4){
-                    Write-Output "Line $($i+1), $($ilotextfile[$i]) is not a valid IP"
+            for($i=0;$i -lt $ilotextfile.count;$i++){
+                if($ilotextfile.count -eq 1){
+                    if($ilotextfile -notmatch $ipv4){
+                        Write-Output "Line 1, $($ilotextfile) is not a valid IP"
+                    }
+                }
+                else{
+                    if($ilotextfile[$i] -notmatch $ipv4){
+                        Write-Output "Line $($i+1), $($ilotextfile[$i]) is not a valid IP"
+                    }
                 }
             }
         }

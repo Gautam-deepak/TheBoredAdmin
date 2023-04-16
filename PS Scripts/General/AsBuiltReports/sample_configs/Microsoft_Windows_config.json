@@ -1,0 +1,48 @@
+{
+    "Report": {
+        "Name": "Microsoft Windows As Built Report",
+        "Version": "1.0",
+        "Status": "Released",
+        "ShowCoverPageImage": true,
+        "ShowTableOfContents": true,
+        "ShowHeaderFooter": true,
+        "ShowTableCaptions": true
+    },
+    "Options": {
+
+    },
+    "InfoLevel": {
+		"_comment_": "Please refer to the AsBuiltReport project contributing guide for information about how to define InfoLevels.",
+        "_comment_": "0 = Disabled, 1 = Enabled, 2 = Adv Summary, 3 = Detailed, 4 = Adv Detailed, 5 = Comprehensive",
+        "Hardware": 1,
+        "OperatingSystem": 1,
+        "Account": 1,
+        "Networking": 1,
+        "Storage": 1,
+        "HyperV": 1,
+        "IIS": 1,
+        "SMB": 1,
+        "DHCP": 1,
+        "DNS": 1
+
+    },
+    "HealthCheck": {
+        "Networking": {
+            "Firewall": true
+        },
+        "OperatingSystem": {
+            "Services": true,
+            "Updates": true
+        },
+        "DNS": {
+            "Aging": true,
+            "DP": true
+        },
+        "DHCP": {
+            "SumStatusmary": true,
+            "Credential": true,
+            "Statistics": true,
+            "BP": true
+        }
+    }
+}

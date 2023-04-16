@@ -1,0 +1,18 @@
+---
+- name: checking gather facts values
+  hosts: all
+  gather_facts: true
+  tasks:
+
+  - name: display ipv4 address of nodes
+    debug:
+      msg: IPv4 address of {{ ansible_hostname }} is {{ ansible_ip_addresses[0] }}
+
+  - name: display fqdn of the nodes
+    debug:
+      msg: FQDN of {{ ansible_hostname }} is {{ ansible_fqdn }}
+
+  - name: display OS distribution
+    debug:
+      msg: OS of {{ ansible_hostname }} is {{ ansible_distribution }}
+

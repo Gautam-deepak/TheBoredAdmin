@@ -1,12 +1,16 @@
 ---
-- hosts: all
+- hosts: "{{ playbook_hosts }}"
   name: Windows Patching playbook
   user: root
   become: yes
+  become_method: runas
+  become_user: hpe-cscitoc.net\itoc_ansible_admin
+
   gather_facts: true
   vars:
+    allow_world_readable_tmpfiles: true
     current_date: "{{ lookup('pipe', 'date +%Y%m%d-%H%M%S') }}"
-    logs_folder: '{{ playbook_dir }}/logs'
+    logs_folder: '/home/itoc_ansible_admin/logs'
     datewise: '{{ logs_folder }}/Win_Patching_{{ current_date }}'
     hotfix_source: 'C:\hotfix.csv'
     logs_source: 'C:\windows_updates-{{ inventory_hostname }}.txt'
