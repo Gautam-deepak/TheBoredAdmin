@@ -1,0 +1,9 @@
+---
+- hosts: all
+  gather_facts: yes
+  name: CIS Benchmark for oracle linux 8
+  tasks:
+  become: yes
+
+  roles:
+    - RHEL8-CIS
