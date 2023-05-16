@@ -1,0 +1,17 @@
+#The lineinfile module allows you to manage single lines on existing files. It's useful to update targeted configuration on existing files without changing the rest of the file or copying the entire configuration file.
+---
+- hosts: all
+  name: use lineinfile to append lines in a file
+  gather_facts: yes
+  tasks:
+  - name: Ensure host rh8-vm03 in hosts file
+    lineinfile:
+      path: /etc/hosts
+      line: 192.168.122.236 rh8-vm03
+      state: present
+  - name: Ensure root cannot login via ssh
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^PermitRootLogin'
+      line: PermitRootLogin no
+      state: present

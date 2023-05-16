@@ -1,0 +1,13 @@
+
+Command					Description
+
+terraform validate			Check whether the configuration syntax is valid.
+terraform plan				Preview the changes that Terraform will make to your infrastructure.
+terraform apply				Apply the changes to your infrastructure.
+terraform destroy			Destroy the infrastructure created by Terraform.
+terraform state list			Show a list of all the resources Terraform is managing.
+terraform state show <resource_name>	Show the attributes of a specific resource that Terraform is managing.
+terraform refresh			Update the state file to reflect the current state of the infrastructure.
+terraform output			Display the outputs of your Terraform configuration.
+terraform workspace			Manage multiple named workspaces.
+terraform import			Import existing infrastructure into your Terraform state.

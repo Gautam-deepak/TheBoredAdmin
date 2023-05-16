@@ -1,0 +1,30 @@
+FROM ubuntu:latest
+
+RUN apt update && apt upgrade -y && apt install openssh-server -y
+
+# Create sshuser directory in home
+RUN mkdir -p ~/.ssh
+
+# Copy the ssh public key in the authorized_keys file. The id_rsa.pub below is a public key file you get from ssh-keygen. 
+# They are under ~/.ssh directory by default.
+
+COPY id_rsa.pub /tmp/id_rsa.pub
+
+# Copy the public key from tmp directory to authorized_keys file
+RUN cat /tmp/id_rsa.pub >> ~/.ssh/authorized_keys && rm -f /tmp/id_rsa.pub
+
+# change ownership of the key file.
+RUN chown -R 1000:1000 ~/.ssh && chmod 600 ~/.ssh/authorized_keys
+
+# Start SSH service
+RUN service ssh start
+
+# Expose docker port 22
+EXPOSE 22
+
+CMD ["/usr/sbin/sshd", "-D"]
+
+# docker build -t node1 .    ---- start build
+
+
+# docker run -d -p 2222:22 node1 ------ start node1 image

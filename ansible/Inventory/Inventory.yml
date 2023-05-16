@@ -1,0 +1,6 @@
+[G1]
+test1 ansible_shell_type=cmd ansible_host=x.x.x.x ansible_user=ansible_admin@test.net
+[G2] 
+test2 ansible_shell_type=cmd ansible_host=x.x.x.x ansible_user=ansible_admin@test.net
+[G3]
+test3 ansible_shell_type=cmd ansible_host=x.x.x.x ansible_user=ansible_admin@test.net

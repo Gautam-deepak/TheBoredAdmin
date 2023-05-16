@@ -1,0 +1,31 @@
+---
+- hosts: all
+  gather_facts: true
+  tasks:
+
+  - name: Get MD5 checksum of a file
+    win_stat:
+      path: C:\test.txt
+      get_checksum: yes
+      checksum_algorithm: md5
+    register: md5_checksum
+
+  - name: Print checksum
+    debug:
+    var: md5_checksum.stat.checksum
+
+  - name: check if a file exist
+    win_stat:
+      path: c:\temp\test.txt
+    register: file
+
+  - name: Print if file exists on remote server
+    debug:
+      msg: "File exists on the server {{ inventory_hostname }}"
+    when: file.exists == true
+
+  - name: Print if file does not exist on remote server
+    debug:
+      msg: "File exists on the server {{ inventory_hostname }}"
+    when: file.exists == false
+

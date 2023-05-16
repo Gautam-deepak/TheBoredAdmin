@@ -1,0 +1,10 @@
+---
+- hosts: all
+  gather_facts: true
+  tasks:
+
+  - name: Enable and remove dedicated ACE's
+    ansible.windows.win_acl_inheritance:
+      path: C:\test
+      state: present
+      reorganize: true

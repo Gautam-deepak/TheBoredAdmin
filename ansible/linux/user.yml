@@ -1,0 +1,14 @@
+---
+- hosts: all
+  gather_facts: true
+  name: Use module user to create users in linux
+  tasks: 
+
+  - name: Ensure user nova exists
+    user:
+      name: nova
+      group: users
+      groups: wheel
+      uid: 2001
+      password: "{{ 'mypassword' | password_hash('sha512') }}" 
+      state: present

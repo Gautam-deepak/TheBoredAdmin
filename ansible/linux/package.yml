@@ -1,0 +1,10 @@
+---
+- hosts: all
+  gather_facts: true
+  name: Use package on remote linux nodes which is idempotent of package manager being used.
+  tasks: 
+
+  - name: Ensure Apache package is installed
+    package:
+      name: httpd
+      state: present

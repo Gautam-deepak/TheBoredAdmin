@@ -1,0 +1,11 @@
+---
+- hosts: all
+  gather_facts: true
+  name: use unarchive module to archive or unarchive any file/directory
+  tasks:
+
+  - name: Extract contents of app.tar.gz
+    unarchive:
+      src: /tmp/app.tar.gz
+      dest: /app
+      remote_src: yes

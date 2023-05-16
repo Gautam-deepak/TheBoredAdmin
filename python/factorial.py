@@ -14,6 +14,6 @@ def factorial():
 # using math function
 
 import math
-number=int(input("Enter a number"))
+number=int(input("Enter a number: "))
 factorial=math.factorial(number)
 print(factorial)

@@ -1,0 +1,10 @@
+---
+- hosts: all
+  gather_facts: true
+  name: use service module to manage service on nodes
+  tasks:
+
+  - name: Ensure SSHD is started
+    service:
+      name: sshd
+      state: started

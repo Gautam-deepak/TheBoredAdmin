@@ -1,0 +1,73 @@
+# Patching main
+  
+  - name: Managed Node | Install all available patches with 3 retries
+    win_updates:
+      category_names:
+        - Security Updates
+        - Critical Updates
+        - Updates
+        - Windows Server 2016
+        - Windows Server 2019
+        - Windows Server 2012 R2
+      reboot: yes
+      reboot_timeout: 1200
+      log_path: "{{ logs_source }}"
+    register: update_count
+    retries: 3
+    delay: 300
+    until: update_count.failed == false
+  
+  - name: Managed and Control Node | Collect patch report back to ansible server
+    fetch:
+     src: "{{ logs_source }}"
+     dest: "{{ log_path }}/reports/patch-report-{{ inventory_hostname }}.txt"
+     flat: yes
+    become: yes
+
+  - name: Control Node | Generating final Patch report
+    run_once: yes
+    delegate_to: localhost
+    shell: "cat {{ log_path }}/reports/patch-report-*.txt >> {{ log_path }}/results/final-patch-report.txt"
+    become: yes
+  
+  - name: Control Node | Read Final Patch report's content
+    shell: cat final-patch-report.txt
+    args:
+      chdir: '{{ log_path }}/results'
+    delegate_to: localhost
+    run_once: yes
+    register: patchreport
+  
+  - name: Control Node | Print patch report's content
+    debug:
+      var: patchreport.stdout_lines
+    run_once: yes
+    
+  - name: Control Node | Print update related information of managed nodes
+    debug: 
+      var: update_count
+  
+  - name: Control Node | Copy Installed patches to a Installed_patches.log
+    local_action:
+      module: copy
+      content: "{{update_count | to_json}}"
+      dest: "{{ log_path }}/reports/installed_patches.log"
+    become: yes
+    become_user: root
+    
+  - name: Control Node | Print installed patches count of managed nodes
+    debug:
+      msg: "No. of patches installed on {{ inventory_hostname }} : {{ update_count.installed_update_count }}"
+    ignore_errors: true
+
+  - name: Control Node | Printing if there are no pending updates
+    debug:
+      msg: "The server {{ inventory_hostname }} is successfully patched and there are no pending updates."
+    when: update_count.found_update_count == update_count.installed_update_count
+    ignore_errors: true
+
+  - name: Control Node | Printing if some updates are left to be installed
+    debug:
+      msg: "The server {{ inventory_hostname }} is not fully patched."
+    when: update_count is undefined or update_count.found_update_count != update_count.installed_update_count
+    ignore_errors: true

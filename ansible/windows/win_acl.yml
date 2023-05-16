@@ -1,0 +1,15 @@
+---
+- hosts: all
+  gather_facts: true
+  name: use win_acl to change permissions of remote files and folders on windows
+  tasks:
+
+  - name: Add administrators allow rights
+    ansible.windows.win_acl:
+      path: C:\temp\test.txt
+      user: administrators
+      rights: FullControl
+      type: allow
+      state: present
+      inherit: ContainerInherit, ObjectInherit
+      propagation: 'None'

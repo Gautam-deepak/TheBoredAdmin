@@ -1,0 +1,49 @@
+# Specify the base image
+FROM ubuntu:latest
+
+# Set environment variables
+ARG MY_VAR=value
+ENV MY_VAR $MY_VAR
+
+# Set the working directory
+WORKDIR /app
+
+# Copy files into the container
+COPY app.py requirements.txt ./
+
+# Install dependencies
+RUN apt-get update && apt-get install -y python3 python3-pip && \
+    pip3 install --no-cache-dir -r requirements.txt
+
+# Set the entrypoint
+ENTRYPOINT ["python3", "app.py"]
+
+# Set the default command
+CMD ["--debug"]
+
+# Expose a port
+EXPOSE 8000
+
+# Add metadata to the image
+LABEL maintainer="Jane Doe <jane.doe@example.com>"
+
+# Set the default shell
+SHELL ["/bin/bash", "-c"]
+
+# Set the healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl --fail http://localhost:8000/ || exit 1
+
+# Specify a stop signal
+STOPSIGNAL SIGTERM
+
+# Create a volume
+VOLUME /data
+
+# Set the user
+USER appuser
+
+# On build
+ONBUILD COPY . /app
+
+# Cleanup
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*

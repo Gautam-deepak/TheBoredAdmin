@@ -1,0 +1,21 @@
+# Instruction for Dockerfile to create a new image on top of the base image (Alpine Linux)
+FROM alpine:latest
+
+# Update package manager and install OpenSSH
+RUN apk update && apk upgrade && apk add openssh
+
+# Create directory for SSHD
+RUN mkdir /var/run/sshd
+
+# Set root password
+RUN echo 'root:mypassword' | chpasswd
+
+# Enable root login and password authentication
+RUN sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && sed -i 's/#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+
+# Expose SSH port
+EXPOSE 22
+
+# Start SSH daemon
+CMD ["/usr/sbin/sshd", "-D"]

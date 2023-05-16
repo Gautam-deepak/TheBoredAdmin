@@ -1,0 +1,21 @@
+---
+- hosts: all
+  name: Check and use copy module in linux
+  gather_facts: true
+  tasks:
+  - name: Ensure MOTD file is in place
+    copy:
+      src: files/motd
+      dest: /etc/motd
+      owner: root
+      group: root
+      mode: 0644
+
+  -  name: Ensure content is copied 
+     copy:
+       content: "Welcome to the content"
+       dest: /etc/motd
+       owner: root
+       group: root
+       mode: 0644
+

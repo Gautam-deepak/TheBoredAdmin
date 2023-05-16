@@ -1,0 +1,16 @@
+
+#The template module works similarly to the copy module, 
+#but it processes content dynamically using the Jinja2 templating language before copying it to the target hosts.
+#motd.j2 contains "welcome to {{ inventory_hostname }}"
+---
+- hosts: all
+  gather_facts: true
+  name: Use jinja2 template
+
+- name: Ensure MOTD file is in place
+  template:
+    src: templates/motd.j2
+    dest: /etc/motd
+    owner: root
+    group: root
+    mode: 0644

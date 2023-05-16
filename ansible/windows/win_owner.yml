@@ -1,0 +1,17 @@
+---
+- hosts: all
+  name: Use win_owner to change owner of a file and folder , use win_acl to change permissions
+  gather_facts: true
+  tasks:
+
+  - name: Change owner of path
+    ansible.windows.win_owner:
+      path: C:\test
+      user: administrator
+      recurse: yes
+
+  - name: Set the owner of root directory
+    ansible.windows.win_owner:
+      path: C:\test
+      user: SYSTEM
+      recurse: no

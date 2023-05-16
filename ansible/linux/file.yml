@@ -1,0 +1,14 @@
+---
+- hosts: all
+  name: using file to create/remove files in linux
+  gather_facts: true
+  tasks: 
+
+  - name: Ensure directory /app exists
+    file:
+      path: /app
+      state: directory
+      owner: ricardo
+      group: users
+      mode: 0770
+      recurse: yes

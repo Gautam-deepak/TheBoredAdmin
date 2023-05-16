@@ -1,0 +1,10 @@
+---
+- hosts: all
+  gather_facts: true
+  tasks: 
+
+  - name: Copy a single file where the source is on the remote host
+    win_copy:
+      src: C:\Temp\test.txt
+      dest: C:\ansible\test.txt
+      remote_src: yes

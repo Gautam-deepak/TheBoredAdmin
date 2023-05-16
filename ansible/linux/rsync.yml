@@ -1,0 +1,13 @@
+---
+- hosts: all
+  name: Rsync is used to copy files in linux
+  gather_facts: true
+  tasks:
+  - name: Synchronize two directories on one remote host.
+    ansible.posix.synchronize:
+      src: /first/absolute/path
+      dest: /second/absolute/path
+    delegate_to: "{{ inventory_hostname }}"
+    rsync_opts:
+      - "--no-motd"
+      - "--exclude=.git"

@@ -1,0 +1,19 @@
+---
+- hosts: all
+  gather_facts: true
+  name: user firewalld to manage firewall on remote hosts
+  tasks:
+
+  - name: Ensure port 80 (http) is open
+    firewalld:
+      service: http
+      state: enabled
+      permanent: yes
+      immediate: yes
+  
+  - name: Ensure port 3000/TCP is open
+    firewalld:
+      port: 3000/tcp
+      state: enabled
+      permanent: yes
+      immediate: yes
