@@ -462,37 +462,63 @@ function get-asbuilt {
             Paragraph -Style Heading3 '1. Address Pool Information'
 	        blankline
             Section -Style Heading2 "1.1 Address Pool details" {
-                $addressPools = Get-OVAddressPool -applianceconnection $connection | Select-Object @{Name='Name';Expression={$_.name}}, 
-                @{Name='Type';Expression={$_.poolType}}, @{Name='Enabled';Expression={$_.enabled}}, 
-                @{Name='Count';Expression={$_.totalCount}}, @{Name='Allocated';Expression={$_.allocatedCount}}, 
-                @{Name='Available';Expression={$_.freeCount}}
-                Table -Name 'OVAddressPool' -InputObject $addressPools -Columns "Name","Type","Enabled","Count","Allocated","Available" `
-                -ColumnWidths 20,20,20,20,20,20 -Headers "Name","Type","Enabled","Count","Allocated","Available" -Caption "OVAddressPool"
+                try {
+                    $addressPools = Get-OVAddressPool -applianceconnection $connection | Select-Object @{Name='Name';Expression={$_.name}}, 
+                    @{Name='Type';Expression={$_.poolType}}, @{Name='Enabled';Expression={$_.enabled}}, 
+                    @{Name='Count';Expression={$_.totalCount}}, @{Name='Allocated';Expression={$_.allocatedCount}}, 
+                    @{Name='Available';Expression={$_.freeCount}}
+                    if(!$addressPools){
+                        throw
+                    }
+                    Table -Name 'OVAddressPool' -InputObject $addressPools -Columns "Name","Type","Enabled","Count","Allocated","Available" `
+                    -ColumnWidths 20,20,20,20,20,20 -Headers "Name","Type","Enabled","Count","Allocated","Available" -Caption "OVAddressPool"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no adddress pools information available."
+                    Paragraph "There is no adddress pools information available." -Bold
+                }
             }
 
             Section -Style Heading2 "1.2 Address Pool Range details"{
-                $addressPoolRanges_allproperty = Get-OVAddressPoolRange -applianceconnection $connection | Select-Object *
+                try {
+                    $addressPoolRanges_allproperty = Get-OVAddressPoolRange -applianceconnection $connection | Select-Object *
+                    if(!$addressPoolRanges_allproperty){
+                        throw
+                    }
+                    $addressPoolRanges=$addressPoolRanges_allproperty | select-object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='Name';Expression={$_.Name}}, @{Name='Enabled';Expression={$_.Enabled}}, @{Name='Category';Expression={$_.rangeCategory}}, `
+                    @{Name='Total';Expression={$_.Totalcount}}, @{Name='Allocated';Expression={$_.Allocatedidcount}}, `
+                    @{Name='Available';Expression={$_.freeidcount}},@{Name='Reserved';Expression={$_.Reservedidcount}}, `
+                    @{Name='Start';Expression={$_.Startaddress}}, @{Name='End';Expression={$_.Endaddress}}
 
-                $addressPoolRanges=$addressPoolRanges_allproperty | select-object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='Name';Expression={$_.Name}}, @{Name='Enabled';Expression={$_.Enabled}}, @{Name='Category';Expression={$_.rangeCategory}}, `
-                @{Name='Total';Expression={$_.Totalcount}}, @{Name='Allocated';Expression={$_.Allocatedidcount}}, `
-                @{Name='Available';Expression={$_.freeidcount}},@{Name='Reserved';Expression={$_.Reservedidcount}}, `
-                @{Name='Start';Expression={$_.Startaddress}}, @{Name='End';Expression={$_.Endaddress}}
-
-                Table -Name 'OVAddressPoolRange' -InputObject $addressPoolRanges -Columns "Appliance","Name","Enabled","Category","Total",`
-                "Allocated","Available","Reserved","Start","End" -ColumnWidths 15,20,15,15,15,15,15,15,25,25 `
-                -Headers "Appliance","Name","Enabled","Category","Total","Allocated","Available","Reserved","Start","End" -Caption "OVAddressPoolRange"
+                    Table -Name 'OVAddressPoolRange' -InputObject $addressPoolRanges -Columns "Appliance","Name","Enabled","Category","Total",`
+                    "Allocated","Available","Reserved","Start","End" -ColumnWidths 15,20,15,15,15,15,15,15,25,25 `
+                    -Headers "Appliance","Name","Enabled","Category","Total","Allocated","Available","Reserved","Start","End" -Caption "OVAddressPoolRange"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no address pool ranges information available."
+                    Paragraph "There is address pool ranges information available." -Bold
+                } 
             }
     
             Section -Style Heading2 "1.3 Address Pool Subnet details" {
-                $addressPoolSubnets_allproperty = Get-OVAddressPoolSubnet -applianceconnection $connection | Select-Object * 
-                $addressPoolSubnets= $addressPoolSubnets_allproperty | select-object @{Name='Appliance';Expression={$_.ApplianceConnection}}, `
-                @{Name='Network ID';Expression={$_.NetworkID}}, @{Name='Subnet Masks';Expression={$_.Subnetmask}}, `
-                @{Name='Gateway';Expression={$_.Gateway}},@{Name='DNS Servers';Expression={$_.DNSServers -join ","}}
+                try {
+                    $addressPoolSubnets_allproperty = Get-OVAddressPoolSubnet -applianceconnection $connection | Select-Object * 
+                    if(!$addressPoolSubnets_allproperty){
+                        throw
+                    }
+                    $addressPoolSubnets= $addressPoolSubnets_allproperty | select-object @{Name='Appliance';Expression={$_.ApplianceConnection}}, `
+                    @{Name='Network ID';Expression={$_.NetworkID}}, @{Name='Subnet Masks';Expression={$_.Subnetmask}}, `
+                    @{Name='Gateway';Expression={$_.Gateway}},@{Name='DNS Servers';Expression={$_.DNSServers -join ","}}
 
-                Table -Name 'OVAddressPoolSubnet' -InputObject $addressPoolSubnets -Columns "Appliance","Network ID","Subnet Masks",`
-                "Gateway","DNS Servers" -ColumnWidths 20,20,20,20,40 -Headers "Appliance","Network ID","Subnet Masks","Gateway","DNS Servers"`
-                -Caption "OVAddressPoolSubnet"
+                    Table -Name 'OVAddressPoolSubnet' -InputObject $addressPoolSubnets -Columns "Appliance","Network ID","Subnet Masks",`
+                    "Gateway","DNS Servers" -ColumnWidths 20,20,20,20,40 -Headers "Appliance","Network ID","Subnet Masks","Gateway","DNS Servers"`
+                    -Caption "OVAddressPoolSubnet"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no address pool subnets information available."
+                    Paragraph "There is no address pool subnets information available." -Bold
+                }
             }
 
             # Section 2
@@ -500,15 +526,24 @@ function get-asbuilt {
             Paragraph -Style Heading3 '2. OneView critical Alerts'
             BlankLine
             Section -Style Heading2 "2.1 Top 20 Critical OneView alerts"{
-                $critovalerts= Get-OVAlert -ApplianceConnection $connection | select-object * | Where-Object {$_.severity -eq "critical"} | `
-                Select-Object -First 20 
-                $ovalerts=$critovalerts | select-object @{Name='Severity';Expression={$_.severity}},`
-                @{Name='Resource';Expression={$_.associatedresource.resourcename}},`
-                @{Name='Created';Expression={$_.Created}},@{Name='Modified';Expression={$_.Modified}},@{Name='State';Expression={$_.alertstate}},`
-                @{Name='Description';Expression={$_.Description}}
+                try {
+                    $critovalerts= Get-OVAlert -ApplianceConnection $connection | select-object * | Where-Object {$_.severity -eq "critical"} | `
+                    Select-Object -First 20
+                    if(!$critovalerts){
+                        throw
+                    }
+                    $ovalerts=$critovalerts | select-object @{Name='Severity';Expression={$_.severity}},`
+                    @{Name='Resource';Expression={$_.associatedresource.resourcename}},`
+                    @{Name='Created';Expression={$_.Created}},@{Name='Modified';Expression={$_.Modified}},@{Name='State';Expression={$_.alertstate}},`
+                    @{Name='Description';Expression={$_.Description}}
         
-                Table -Name 'Critical OVAlerts' -InputObject $ovalerts -Columns "Severity","Resource","Created","Modified","State","Description" `
-                -ColumnWidths 20,20,20,20,20,40 -Headers "Severity","Resource","Created","Modified","State","Description" -Caption 'Critical OVAlerts'
+                    Table -Name 'Critical OVAlerts' -InputObject $ovalerts -Columns "Severity","Resource","Created","Modified","State","Description" `
+                    -ColumnWidths 20,20,20,20,20,40 -Headers "Severity","Resource","Created","Modified","State","Description" -Caption 'Critical OVAlerts'
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no critical alerts information available."
+                    Paragraph "There is no critical alerts information available." -Bold
+                }
             }
 
             # Section 3
@@ -516,142 +551,277 @@ function get-asbuilt {
             Paragraph -Style Heading3 '3. Appliance Information'
             BlankLine
             Section -Style Heading2 "3.1 Audit log Forwarding "{
-                $auditlog_forwarding_allproperty= Get-OVApplianceAuditLogForwarding -applianceconnection $connection | Select-Object *
-                $auditlog_forwarding= $auditlog_forwarding_allproperty | Select-Object @{Name='Enabled';Expression={$_.Enabled}},`
-                @{Name='Destinations';Expression={$_.Destinations -join ','}},@{Name='appliance';Expression={$_.ApplianceConnection}}
-                Table -Name 'Auditlog forwarding' -InputObject $auditlog_forwarding -Columns "Appliance","Destinations","Enabled" -ColumnWidths `
-                "20","50","20" -Headers "Appliance","Destinations","Enabled" -Caption 'Auditlog forwarding'
+                try {
+                    $auditlog_forwarding_allproperty= Get-OVApplianceAuditLogForwarding -applianceconnection $connection | Select-Object *
+                    if(!$auditlog_forwarding_allproperty){
+                        throw
+                    }
+                    $auditlog_forwarding= $auditlog_forwarding_allproperty | Select-Object @{Name='Enabled';Expression={$_.Enabled}},`
+                    @{Name='Destinations';Expression={$_.Destinations -join ','}},@{Name='appliance';Expression={$_.ApplianceConnection}}
+                    Table -Name 'Auditlog forwarding' -InputObject $auditlog_forwarding -Columns "Appliance","Destinations","Enabled" -ColumnWidths `
+                    "20","50","20" -Headers "Appliance","Destinations","Enabled" -Caption 'Auditlog forwarding'
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no auditlog forwarding information available."
+                    Paragraph "There is no auditlog forwarding information available." -Bold
+                }
             }
 
             Section -Style Heading2 "3.2 Available security mode"{
-                $available_securitymode_allproperty= Get-OVApplianceAvailableSecurityMode -applianceconnection $connection | Select-Object *
-                $available_securitymode= $available_securitymode_allproperty | Select-Object @{Name='Mode Name';Expression={$_.modename}},`
-                @{Name='Current Mode';Expression={$_.currentmode}},@{Name='appliance';Expression={$_.ApplianceConnection}}
-                Table -Name 'Available Security Mode' -InputObject $available_securitymode -Columns "Appliance","Mode Name","Current Mode" `
-                -ColumnWidths "30","30","30" -Headers "Appliance","Mode Name","Current Mode" -Caption 'Available Security Mode'
+                try {
+                    $available_securitymode_allproperty= Get-OVApplianceAvailableSecurityMode -applianceconnection $connection | Select-Object *
+                    if($available_securitymode_allproperty){
+                        throw
+                    }
+                    $available_securitymode= $available_securitymode_allproperty | Select-Object @{Name='Mode Name';Expression={$_.modename}},`
+                    @{Name='Current Mode';Expression={$_.currentmode}},@{Name='appliance';Expression={$_.ApplianceConnection}}
+                    Table -Name 'Available Security Mode' -InputObject $available_securitymode -Columns "Appliance","Mode Name","Current Mode" `
+                    -ColumnWidths "30","30","30" -Headers "Appliance","Mode Name","Current Mode" -Caption 'Available Security Mode'
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no security mode information available."
+                    Paragraph "There is no security mode information available." -Bold
+                }
             }
 
             Section -Style Heading2 "3.3 Certificate status"{
-                $certificate_status_allproperty=Get-OVApplianceCertificateStatus -applianceconnection $connection | Select-Object *
-                $certificate_status=$certificate_status_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='CN';Expression={$_.commonname}},@{Name='Issuer';Expression={$_.Issuer}},@{Name='Valid from';Expression={$_.validfrom}}`
-                ,@{Name='Valid Until';Expression={$_.validuntil}},@{Name='Expires in days';Expression={$_.Expiresindays}}
-                Table -Name 'Certificate Status' -InputObject $certificate_status -Columns "Appliance","CN","Issuer","Valid from","Valid until",`
-                "Expires in days" -ColumnWidths 20,20,20,20,20,20 -Headers "Appliance","CN","Issuer","Valid from","Valid until","Expires in days"`
-                -Caption 'Certificate status'
+                try {
+                    $certificate_status_allproperty=Get-OVApplianceCertificateStatus -applianceconnection $connection | Select-Object *
+                    if(!$certificate_status_allproperty){
+                        throw
+                    }
+                    $certificate_status=$certificate_status_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='CN';Expression={$_.commonname}},@{Name='Issuer';Expression={$_.Issuer}},@{Name='Valid from';Expression={$_.validfrom}}`
+                    ,@{Name='Valid Until';Expression={$_.validuntil}},@{Name='Expires in days';Expression={$_.Expiresindays}}
+                    Table -Name 'Certificate Status' -InputObject $certificate_status -Columns "Appliance","CN","Issuer","Valid from","Valid until",`
+                    "Expires in days" -ColumnWidths 20,20,20,20,20,20 -Headers "Appliance","CN","Issuer","Valid from","Valid until","Expires in days"`
+                    -Caption 'Certificate status'
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no certificate status information available."
+                    Paragraph "There is no certificate status information available." -Bold
+                }
             }
 
             Section -Style Heading2 "3.4 Current Security Mode"{
-                $security_mode_allproperty=Get-OVApplianceCurrentSecurityMode -applianceconnection $connection | Select-Object *
-                $security_mode=$security_mode_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='Current Mode';Expression={$_.currentmode}},@{Name='Mode Name';Expression={$_.modename}}    
-                Table -Name 'CurrentSecurityMode' -InputObject $security_mode -Columns "Appliance","Current Mode","Mode name" `
-                -ColumnWidths "33","33","33" -Headers "Appliance","Current Mode","Mode name" -Caption "Current security mode"
+                try {
+                    $security_mode_allproperty=Get-OVApplianceCurrentSecurityMode -applianceconnection $connection | Select-Object *
+                    if(!$security_mode_allproperty){
+                        throw
+                    }
+                    $security_mode=$security_mode_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='Current Mode';Expression={$_.currentmode}},@{Name='Mode Name';Expression={$_.modename}}    
+                    Table -Name 'CurrentSecurityMode' -InputObject $security_mode -Columns "Appliance","Current Mode","Mode name" `
+                    -ColumnWidths "33","33","33" -Headers "Appliance","Current Mode","Mode name" -Caption "Current security mode"   
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no security mode information available."
+                    Paragraph "There is no security mode information available." -Bold
+                }
             }
 
             Section -Style Heading2 "3.5 Datetime"{
-                $datetime_allproperty=Get-OVApplianceDateTime -applianceconnection $connection | Select-Object *
-                $datetime=$datetime_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='Locale';Expression={$_.locale}},@{Name='Timezone';Expression={$_.Timezone}},@{Name='Datetime';Expression={$_.datetime}},`
-                @{Name='NTP Servers';Expression={$_.Ntpservers -join ","}},@{Name='Sync with Host';Expression={$_.syncwithhost}},`
-                @{Name='Locale Display Name';Expression={$_.localedisplayname}}
-                Table -Name 'datetime' -InputObject $datetime -Columns "Appliance","locale","Timezone","datetime","NTP servers","Sync with host",`
-                "locale display name" -ColumnWidths "14","14","14","14","14","14","14" -Headers "Appliance","locale","Time Zone","datetime",`
-                "NTP servers","Sync with host","locale display name" -Caption "Date time"
+                try {
+                    $datetime_allproperty=Get-OVApplianceDateTime -applianceconnection $connection | Select-Object *
+                    if(!$datetime_allproperty){
+                        throw
+                    }
+                    $datetime=$datetime_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='Locale';Expression={$_.locale}},@{Name='Timezone';Expression={$_.Timezone}},@{Name='Datetime';Expression={$_.datetime}},`
+                    @{Name='NTP Servers';Expression={$_.Ntpservers -join ","}},@{Name='Sync with Host';Expression={$_.syncwithhost}},`
+                    @{Name='Locale Display Name';Expression={$_.localedisplayname}}
+                    Table -Name 'datetime' -InputObject $datetime -Columns "Appliance","locale","Timezone","datetime","NTP servers","Sync with host",`
+                    "locale display name" -ColumnWidths "14","14","14","14","14","14","14" -Headers "Appliance","locale","Time Zone","datetime",`
+                    "NTP servers","Sync with host","locale display name" -Caption "Date time"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no datetime information available."
+                    Paragraph "There is no datetime information available." -Bold
+                }
             }
 
             Section -Style Heading2 "3.6 Global settings"{
-                $global_settings_allproperty=Get-OVApplianceGlobalSetting -ApplianceConnection $connection | Select-Object *
-                $global_settings= $global_settings_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='Name';Expression={$_.Name}},@{Name='Value';Expression={$_.Value}},@{Name='Created';Expression={$_.created}},`
-                @{Name='Modified';Expression={$_.Modified}},@{Name='Group';Expression={$_.Group}}
-                Table -Name 'GlobalSettings' -InputObject $global_settings -Columns "Appliance","Name","Value","Created","Modified","Group"`
-                -ColumnWidths "16","16","16","16","16" -Headers "Appliance","Name","Value","Created","Modified","Group" -Caption "Global Settings"
+                try {
+                    $global_settings_allproperty=Get-OVApplianceGlobalSetting -ApplianceConnection $connection | Select-Object *
+                    if(!$global_settings_allproperty){
+                        throw
+                    }
+                    $global_settings= $global_settings_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='Name';Expression={$_.Name}},@{Name='Value';Expression={$_.Value}},@{Name='Created';Expression={$_.created}},`
+                    @{Name='Modified';Expression={$_.Modified}},@{Name='Group';Expression={$_.Group}}
+                    Table -Name 'GlobalSettings' -InputObject $global_settings -Columns "Appliance","Name","Value","Created","Modified","Group"`
+                    -ColumnWidths "16","16","16","16","16" -Headers "Appliance","Name","Value","Created","Modified","Group" -Caption "Global Settings"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no global settings information available."
+                    Paragraph "There is no global settings information available." -Bold
+                }
             }
 
             Section -Style Heading2 "3.7 IPv4 details"{
-                $ipdetails_allproperty=Get-OVApplianceIPAddress -applianceconnection $connection | Select-Object *
-                $ipdetails =$ipdetails_allproperty | Select-Object `
-                @{Name='Hostname';Expression={$_.hostname}},@{Name='IPv4 Address';Expression={$_.IPv4Address}},`
-                @{Name='IPv4 SM';Expression={$_.IPv4SubnetMask}},`
-                @{Name='IPv4 gateway';Expression={$_.IPv4Gateway}},@{Name='IPv4 Type';Expression={$_.IPv4Type}},`
-                @{Name='IPv4 DNS Servers';Expression={$_.IPv4DnsServers -join ','}}
-                Table -Name 'IPdetails' -InputObject $ipdetails -Columns "Hostname","IPv4 Address","IPv4 SM","IPv4 gateway","IPv4 Type",`
-                "IPv4 Dns Servers" -ColumnWidths "16","16","16","16","16","16" -Headers "Hostname","IPv4 Address","IPv4 SM","IPv4 gateway",`
-                "IPv4 Type","IPv4 DNS Servers" -Caption "IPv4 Details"
+                try {
+                    $ipdetails_allproperty=Get-OVApplianceIPAddress -applianceconnection $connection | Select-Object *
+                    if(!$ipdetails_allproperty){
+                        throw
+                    }
+                    $ipdetails =$ipdetails_allproperty | Select-Object `
+                    @{Name='Hostname';Expression={$_.hostname}},@{Name='IPv4 Address';Expression={$_.IPv4Address}},`
+                    @{Name='IPv4 SM';Expression={$_.IPv4SubnetMask}},`
+                    @{Name='IPv4 gateway';Expression={$_.IPv4Gateway}},@{Name='IPv4 Type';Expression={$_.IPv4Type}},`
+                    @{Name='IPv4 DNS Servers';Expression={$_.IPv4DnsServers -join ','}}
+                    Table -Name 'IPdetails' -InputObject $ipdetails -Columns "Hostname","IPv4 Address","IPv4 SM","IPv4 gateway","IPv4 Type",`
+                    "IPv4 Dns Servers" -ColumnWidths "16","16","16","16","16","16" -Headers "Hostname","IPv4 Address","IPv4 SM","IPv4 gateway",`
+                    "IPv4 Type","IPv4 DNS Servers" -Caption "IPv4 Details"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no Ipv4 details information available."
+                    Paragraph "There is no Ipv4 details information available." -Bold
+                }
             }
 
             Section -Style Heading2 "3.8 Network configuration"{
-                $network_config_allproperty=(Get-OVApplianceNetworkConfig -applianceconnection $connection).appliancenetworks | Select-Object *
-                $network_config=$network_config_allproperty | Select-Object @{Name='Network Label';Expression={$_.networklabel}},`
-                @{Name='Interface Name';Expression={$_.interfacename}},@{Name='Device';Expression={$_.device}},`
-                @{Name='MacAddress';Expression={$_.MacAddress}},@{Name='Ipv4type';Expression={$_.Ipv4type}},@{Name='Ipv6Type';Expression={$_.Ipv6Type}},`
-                @{Name='Active Node';Expression={$_.activenode}}
-                Table -Name 'Network Configuration' -InputObject $network_config -Columns "Network label","Interface Name","Device",`
-                "MacAddress","Ipv4Type","IPv6Type","Active Node" -ColumnWidths "14","14","14","14","14","14","14" -Headers "Network label",`
-                "Interface Name","Device","MacAddress","Ipv4Type","IPv6Type","Active Node" -Caption "Network Configuration"
+                try {
+                    $network_config_allproperty=(Get-OVApplianceNetworkConfig -applianceconnection $connection).appliancenetworks | Select-Object *
+                    if(!$network_config_allproperty){
+                        throw
+                    }
+                    $network_config=$network_config_allproperty | Select-Object @{Name='Network Label';Expression={$_.networklabel}},`
+                    @{Name='Interface Name';Expression={$_.interfacename}},@{Name='Device';Expression={$_.device}},`
+                    @{Name='MacAddress';Expression={$_.MacAddress}},@{Name='Ipv4type';Expression={$_.Ipv4type}},@{Name='Ipv6Type';Expression={$_.Ipv6Type}},`
+                    @{Name='Active Node';Expression={$_.activenode}}
+                    Table -Name 'Network Configuration' -InputObject $network_config -Columns "Network label","Interface Name","Device",`
+                    "MacAddress","Ipv4Type","IPv6Type","Active Node" -ColumnWidths "14","14","14","14","14","14","14" -Headers "Network label",`
+                    "Interface Name","Device","MacAddress","Ipv4Type","IPv6Type","Active Node" -Caption "Network Configuration"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no network configuration information available."
+                    Paragraph "There is no network configuration information available." -Bold
+                }
             }
 
             Section -Style Heading2 "3.9 Appliance Proxy"{
-                $appliance_proxy_allproperty=Get-OVApplianceProxy -applianceconnection $connection | Select-Object *
-                $appliance_proxy=$appliance_proxy_allproperty | select-object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='Protocol';Expression={$_.Protocol}},@{Name='Port';Expression={$_.Port}}
-                Table -Name 'Appliance Proxy' -InputObject $appliance_proxy -Columns "Appliance","Protocol","Port" -ColumnWidths "30","30","30"`
-                -Headers "Appliance","Protocol","Port" -Caption "Appliance Proxy"
+                try {
+                    $appliance_proxy_allproperty=Get-OVApplianceProxy -applianceconnection $connection | Select-Object *
+                    if(!$appliance_proxy_allproperty){
+                        throw
+                    }
+                    $appliance_proxy=$appliance_proxy_allproperty | select-object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='Protocol';Expression={$_.Protocol}},@{Name='Port';Expression={$_.Port}}
+                    Table -Name 'Appliance Proxy' -InputObject $appliance_proxy -Columns "Appliance","Protocol","Port" -ColumnWidths "30","30","30"`
+                    -Headers "Appliance","Protocol","Port" -Caption "Appliance Proxy"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no appliance proxy information available."
+                    Paragraph "There is no appliance proxy information available." -Bold
+                }
             }
 
             Section -Style Heading2 "3.10 Security Protocol"{
-                $security_protocol_allproperty=Get-OVApplianceSecurityProtocol -applianceconnection $connection | Select-Object *
-                $security_protocol=$security_protocol_allproperty | Select-Object @{Name='Name';Expression={$_.name}},`
-                @{Name='CipherSuites';Expression={$_.CipherSuites}},@{Name='Category';Expression={$_.Category}},@{Name='Mode';Expression={$_.mode}},`
-                @{Name='ModeisEnabled';Expression={$_.ModeisEnabled}},@{Name='Enabled';Expression={$_.enabled}}
-                Table -Name 'Security Protocol' -InputObject $security_protocol -Columns "Name","CipherSuites","Category","Mode",`
-                "ModeisEnabled","Enabled" -ColumnWidths "16","16","16","16","16","16" -Headers "Name","CipherSuites","Category","Mode",`
-                "ModeisEnabled","Enabled" -Caption "Security Protocols"
+                try {
+                    $security_protocol_allproperty=Get-OVApplianceSecurityProtocol -applianceconnection $connection | Select-Object *
+                    if(!$security_protocol_allproperty){
+                        throw
+                    }
+                    $security_protocol=$security_protocol_allproperty | Select-Object @{Name='Name';Expression={$_.name}},`
+                    @{Name='CipherSuites';Expression={$_.CipherSuites}},@{Name='Category';Expression={$_.Category}},@{Name='Mode';Expression={$_.mode}},`
+                    @{Name='ModeisEnabled';Expression={$_.ModeisEnabled}},@{Name='Enabled';Expression={$_.enabled}}
+                    Table -Name 'Security Protocol' -InputObject $security_protocol -Columns "Name","CipherSuites","Category","Mode",`
+                    "ModeisEnabled","Enabled" -ColumnWidths "16","16","16","16","16","16" -Headers "Name","CipherSuites","Category","Mode",`
+                    "ModeisEnabled","Enabled" -Caption "Security Protocols"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no security protocol information available."
+                    Paragraph "There is no security protocol information available." -Bold
+                }
             }
 
             Section -Style Heading2 "3.11 Service Console Access"{
-                $service_access_allproperty=Get-OVApplianceServiceConsoleAccess -applianceconnection $connection | Select-Object *
-                $service_access=$service_access_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='Enabled';Expression={$_.Enabled}}
-                Table -Name 'ServiceConsoleAccess' -InputObject $service_access -Columns "Appliance","Enabled" -ColumnWidths "50","50" `
-                -Headers "Appliance","Enabled" -Caption "Service Console Access"
+                try {
+                    $service_access_allproperty=Get-OVApplianceServiceConsoleAccess -applianceconnection $connection | Select-Object *
+                    if(!$service_access_allproperty){
+                        throw
+                    }
+                    $service_access=$service_access_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='Enabled';Expression={$_.Enabled}}
+                    Table -Name 'ServiceConsoleAccess' -InputObject $service_access -Columns "Appliance","Enabled" -ColumnWidths "50","50" `
+                    -Headers "Appliance","Enabled" -Caption "Service Console Access"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no service console information available."
+                    Paragraph "There is no service console information available." -Bold
+                }
             }
 
             Section -Style Heading2 "3.12 SNMP EngineID"{
-                $snmp_engine_allproperty=Get-OVApplianceSnmpV3EngineId -applianceconnection $connection | Select-Object *
-                $snmp_engine=$snmp_engine_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='EngineID';Expression={$_.EngineID}}
-                Table -Name 'SNMPEngineID' -InputObject $snmp_engine -Columns "Appliance","EngineID" -ColumnWidths "50","50" `
-                -Headers "Appliance","EngineID" -Caption "SNMP EngineID"
+                try {
+                    $snmp_engine_allproperty=Get-OVApplianceSnmpV3EngineId -applianceconnection $connection | Select-Object *
+                    if(!$snmp_engine_allproperty){
+                        throw
+                    }
+                    $snmp_engine=$snmp_engine_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='EngineID';Expression={$_.EngineID}}
+                    Table -Name 'SNMPEngineID' -InputObject $snmp_engine -Columns "Appliance","EngineID" -ColumnWidths "50","50" `
+                    -Headers "Appliance","EngineID" -Caption "SNMP EngineID"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no SNMP EngineID information available."
+                    Paragraph "There is no SNMP EngineID information available." -Bold
+                }
             }
 
             Section -Style Heading2 "3.13 SSH Access"{
-                $ssh_access=Get-OVApplianceSshAccess -applianceconnection $connection | Select-Object `
-                @{Name='Appliance';Expression={$_.ApplianceConnection}},@{Name='Enabled';Expression={$_.Enabled}}
-                Table -Name 'SSH Access' -InputObject $ssh_access -Columns "Appliance","Enabled" -ColumnWidths "50","50" `
-                -Headers "Appliance","Enabled" -Caption "SSH Access"
+                try {
+                    $ssh_access=Get-OVApplianceSshAccess -applianceconnection $connection | Select-Object `
+                    @{Name='Appliance';Expression={$_.ApplianceConnection}},@{Name='Enabled';Expression={$_.Enabled}}
+                    if(!$ssh_access){
+                        throw
+                    }
+                    Table -Name 'SSH Access' -InputObject $ssh_access -Columns "Appliance","Enabled" -ColumnWidths "50","50" `
+                    -Headers "Appliance","Enabled" -Caption "SSH Access"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no SSH Access information available."
+                    Paragraph "There is no SSH Access information available." -Bold
+                }
             }
 
             Section -Style Heading2 "3.14 Certificate status"{
-                $certificate_status=Get-OVApplianceTrustedCertificate -applianceconnection $connection | Select-Object `
-                @{Name='Name';Expression={$_.name}},@{Name='Alias';Expression={$_.AliasName}},@{Name='Certificate';Expression={$_.certificate}},`
-                @{Name='Status';Expression={$_.CertificateStatus}},@{Name='Created';Expression={$_.created}},`
-                @{Name='Modified';Expression={$_.Modified}}
-                Table -Name 'Certificate Status' -InputObject $certificate_status -Columns "Name","Alias","Certificate","Status",`
-                "Created","Modified" -ColumnWidths "16","16","16","16","16","16" -Headers "Name","Alias","Certificate","Status",`
-                "Created","Modified" -Caption "Certificate Status"
+                try {
+                    $certificate_status=Get-OVApplianceTrustedCertificate -applianceconnection $connection | Select-Object `
+                    @{Name='Name';Expression={$_.name}},@{Name='Alias';Expression={$_.AliasName}},@{Name='Certificate';Expression={$_.certificate}},`
+                    @{Name='Status';Expression={$_.CertificateStatus}},@{Name='Created';Expression={$_.created}},`
+                    @{Name='Modified';Expression={$_.Modified}}
+                    if(!$certificate_status){
+                        throw
+                    }
+                    Table -Name 'Certificate Status' -InputObject $certificate_status -Columns "Name","Alias","Certificate","Status",`
+                    "Created","Modified" -ColumnWidths "16","16","16","16","16","16" -Headers "Name","Alias","Certificate","Status",`
+                    "Created","Modified" -Caption "Certificate Status"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no certificate status information available."
+                    Paragraph "There is no certificate status information available." -Bold
+                }
             }
 
             Section -Style Heading2 "3.15 Two Factor Authentication"{
-                $twofactor_auth=Get-OVApplianceTwoFactorAuthentication -applianceconnection $connection | Select-Object `
-                @{Name='Appliance';Expression={$_.ApplianceConnection}},@{Name='Enabled';Expression={$_.enabled}},`
-                @{Name='StrictEnforcement';Expression={$_.StrictEnforcement}},@{Name='AllowLocalLogin';Expression={$_.AllowLocalLogin}},`
-                @{Name='AllowEmergencyLogin';Expression={$_.AllowEmergencyLogin}},@{Name='EmergencyLoginType';Expression={$_.EmergencyLoginType}}
-                Table -Name 'Two Factor Authentication' -InputObject $twofactor_auth -Columns "Appliance","Enabled","StrictEnforcement",`
-                "AllowLocalLogin","AllowEmergencyLogin","EmergencyLoginType" -ColumnWidths "16","16","16","16","16","16" `
-                -Headers "Appliance","Enabled","StrictEnforcement","AllowLocalLogin","AllowEmergencyLogin","EmergencyLoginType" `
-                -Caption "Two Factor Authentication"
+                try {
+                    $twofactor_auth=Get-OVApplianceTwoFactorAuthentication -applianceconnection $connection | Select-Object `
+                    @{Name='Appliance';Expression={$_.ApplianceConnection}},@{Name='Enabled';Expression={$_.enabled}},`
+                    @{Name='StrictEnforcement';Expression={$_.StrictEnforcement}},@{Name='AllowLocalLogin';Expression={$_.AllowLocalLogin}},`
+                    @{Name='AllowEmergencyLogin';Expression={$_.AllowEmergencyLogin}},@{Name='EmergencyLoginType';Expression={$_.EmergencyLoginType}}
+                    if(!$twofactor_auth){
+                        throw
+                    }
+                    Table -Name 'Two Factor Authentication' -InputObject $twofactor_auth -Columns "Appliance","Enabled","StrictEnforcement",`
+                    "AllowLocalLogin","AllowEmergencyLogin","EmergencyLoginType" -ColumnWidths "16","16","16","16","16","16" `
+                    -Headers "Appliance","Enabled","StrictEnforcement","AllowLocalLogin","AllowEmergencyLogin","EmergencyLoginType" `
+                    -Caption "Two Factor Authentication"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no two factor authentication information available."
+                    Paragraph "There is no two factor authentication information available." -Bold
+                }
             }
 
             # Section 4
@@ -660,14 +830,23 @@ function get-asbuilt {
             BlankLine
 
             Section -Style Heading2 "4.1 Automatic Backup Config"{
-                $automatic_backup_allproperty=Get-OVAutomaticBackupConfig -applianceconnection $connection | Select-Object *
-                $automatic_backup=$automatic_backup_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='Enabled';Expression={$_.enabled}},@{Name='Protocol';Expression={$_.Protocol}},@{Name='Interval';Expression={$_.scheduleinterval}},`
-                @{Name='Days';Expression={$_.scheduledays}},@{Name='Time';Expression={$_.scheduletime}},`
-                @{Name='Directory';Expression={$_.remoteserverdir}}
-                Table -Name 'Automatic Backup' -InputObject $automatic_backup -Columns "Appliance","Enabled","Protocol","Directory","Interval",`
-                "Days","time" -ColumnWidths "14","14","14","14","14","14","14" -Headers "Appliance","Enabled","Protocol","Directory",`
-                "Interval","Days","time" -Caption "Automatic Backup config"
+                try {
+                    $automatic_backup_allproperty=Get-OVAutomaticBackupConfig -applianceconnection $connection | Select-Object *
+                    if(!$automatic_backup_allproperty){
+                        throw
+                    }
+                    $automatic_backup=$automatic_backup_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='Enabled';Expression={$_.enabled}},@{Name='Protocol';Expression={$_.Protocol}},@{Name='Interval';Expression={$_.scheduleinterval}},`
+                    @{Name='Days';Expression={$_.scheduledays}},@{Name='Time';Expression={$_.scheduletime}},`
+                    @{Name='Directory';Expression={$_.remoteserverdir}}
+                    Table -Name 'Automatic Backup' -InputObject $automatic_backup -Columns "Appliance","Enabled","Protocol","Directory","Interval",`
+                    "Days","time" -ColumnWidths "14","14","14","14","14","14","14" -Headers "Appliance","Enabled","Protocol","Directory",`
+                    "Interval","Days","time" -Caption "Automatic Backup config"
+                    }
+                catch {
+                    Write-PScriboMessage -Message "There is no automatic backup config information available."
+                    Paragraph "There is no automatic backup config information available." -Bold
+                }
             }
 
             Section -Style Heading2 "4.2 Backup Information"{
@@ -675,6 +854,9 @@ function get-asbuilt {
                     $backup_info=Get-OVBackup -applianceconnection $connection | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
                     @{Name='Created';Expression={$_.created}},@{Name='Modified';Expression={$_.Modified}},@{Name='Percent';Expression={$_.percentcomplete}},`
                     @{Name='Status';Expression={$_.status}},@{Name='Type';Expression={$_.Backuptype}}
+                    if(!$backup_info){
+                        throw
+                    }
                     Table -Name 'Backup Information' -InputObject $backup_info -Columns "Appliance","Created","Modified","Percent","Status",`
                     "Type" -ColumnWidths "16","16","16","16","16" -Headers "Appliance","Created","Modified","Percent","Status",`
                     "Type" -Caption "Backup Information"   
@@ -691,20 +873,38 @@ function get-asbuilt {
             BlankLine
 
             Section -Style Heading2 "5.1 Baseline "{
-                $baseline_allproperty=Get-OVBaseline -applianceconnection $connection | Select-Object *
-                $baseline=$baseline_allproperty | Select-Object @{Name='Name';Expression={$_.name}},@{Name='State';Expression={$_.state}},`
-                @{Name='Status';Expression={$_.status}},@{Name='Version';Expression={$_.version}},@{Name='IsoFileName';Expression={$_.isofilename}}
-                Table -Name 'Baseline' -InputObject $baseline -Columns "Name","State","Status","Version","Isofilename" `
-                -ColumnWidths "15","15","15","15","40" -Headers "Name","State","Status","Version","Isofilename" -Caption "Baseline"
+                try {
+                    $baseline_allproperty=Get-OVBaseline -applianceconnection $connection | Select-Object *
+                    if(!$baseline_allproperty){
+                        throw
+                    }
+                    $baseline=$baseline_allproperty | Select-Object @{Name='Name';Expression={$_.name}},@{Name='State';Expression={$_.state}},`
+                    @{Name='Status';Expression={$_.status}},@{Name='Version';Expression={$_.version}},@{Name='IsoFileName';Expression={$_.isofilename}}
+                    Table -Name 'Baseline' -InputObject $baseline -Columns "Name","State","Status","Version","Isofilename" `
+                    -ColumnWidths "15","15","15","15","40" -Headers "Name","State","Status","Version","Isofilename" -Caption "Baseline"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no baseline information available."
+                    Paragraph "There is no baseline information available." -Bold
+                }
             }
 
             Section -Style Heading2 "5.2 Baseline Repository"{
-                $baselinerepo_allproperty=Get-OVBaselineRepository -applianceconnection $connection | Select-Object *
-                $baselinerepo=$baselinerepo_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='Name';Expression={$_.name}},@{Name='Type';Expression={$_.type}},@{Name='Status';Expression={$_.status}},`
-                @{Name='Free';Expression={$_.availablespace}},@{Name='Total';Expression={$_.totalspace}}
-                Table -Name 'Baseline Repository' -InputObject $baselinerepo -Columns "Appliance","name","Type","Status","Free","Total" `
-                -ColumnWidths "16","16","16","16","16" -Headers "Appliance","name","Type","Status","Free","Total" -Caption "Baseline Repository"
+                try {
+                    $baselinerepo_allproperty=Get-OVBaselineRepository -applianceconnection $connection | Select-Object *
+                    if(!$baselinerepo_allproperty){
+                        throw
+                    }
+                    $baselinerepo=$baselinerepo_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='Name';Expression={$_.name}},@{Name='Type';Expression={$_.type}},@{Name='Status';Expression={$_.status}},`
+                    @{Name='Free';Expression={$_.availablespace}},@{Name='Total';Expression={$_.totalspace}}
+                    Table -Name 'Baseline Repository' -InputObject $baselinerepo -Columns "Appliance","name","Type","Status","Free","Total" `
+                    -ColumnWidths "16","16","16","16","16" -Headers "Appliance","name","Type","Status","Free","Total" -Caption "Baseline Repository"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no baseline repository information available."
+                    Paragraph "There is no baseline repository information available." -Bold
+                }
             }
 
             # Section 6
@@ -753,14 +953,23 @@ function get-asbuilt {
             BlankLine
 
             Section -Style Heading2 "8.1 Datacenter"{
-                $datacenter=Get-OVDataCenter -ApplianceConnection $connection | Select-Object @{Name='Name';Expression={$_.name}},`
-                @{Name='State';Expression={$_.state}},@{Name='Status';Expression={$_.status}},`
-                @{Name='Primary Contact';Expression={$_.remotesupportlocation.primarycontact.email}},`
-                @{Name='Address';Expression={$_.remotesupportlocation.Streetaddress1+","+$_.remotesupportlocation.Streetaddress2+","`
-                +$_.remotesupportlocation.city+","+$_.remotesupportlocation.provincestate+","+$_.remotesupportlocation.Postalcode`
-                +$_.remotesupportlocation.Countrycode}},@{Name='timezone';Expression={$_.remotesupportlocation.timezone}}
-                Table -Name 'Datacenter' -InputObject $datacenter -Columns "Name","State","Status","Primary contact","Address","Timezone" `
-                -ColumnWidths "16","16","16","16","16","16" -Headers "Name","State","Status","Primary contact","Address","Timezone" -Caption "Datacenter"
+                try {
+                    $datacenter=Get-OVDataCenter -ApplianceConnection $connection | Select-Object @{Name='Name';Expression={$_.name}},`
+                    @{Name='State';Expression={$_.state}},@{Name='Status';Expression={$_.status}},`
+                    @{Name='Primary Contact';Expression={$_.remotesupportlocation.primarycontact.email}},`
+                    @{Name='Address';Expression={$_.remotesupportlocation.Streetaddress1+","+$_.remotesupportlocation.Streetaddress2+","`
+                    +$_.remotesupportlocation.city+","+$_.remotesupportlocation.provincestate+","+$_.remotesupportlocation.Postalcode`
+                    +$_.remotesupportlocation.Countrycode}},@{Name='timezone';Expression={$_.remotesupportlocation.timezone}}
+                    if(!$datacenter){
+                        throw
+                    }
+                    Table -Name 'Datacenter' -InputObject $datacenter -Columns "Name","State","Status","Primary contact","Address","Timezone" `
+                    -ColumnWidths "16","16","16","16","16","16" -Headers "Name","State","Status","Primary contact","Address","Timezone" -Caption "Datacenter"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no datacenter information available."
+                    Paragraph "There is no datacenter information available." -Bold
+                }
             }
 
             # Section 9
@@ -786,11 +995,19 @@ function get-asbuilt {
             BlankLine
 
             Section -Style Heading2 "10.1 Eula Status"{
-                $eula=Get-OVEulaStatus -Appliance $connection | Select-Object @{Name='Appliance';Expression={$_.appliance}},`
-                @{Name='Accepted';Expression={$_.Accepted}}
-
-                Table -Name 'Eula Status' -InputObject $eula -Columns "Appliance","Accepted" -ColumnWidths "50","50" -Headers "Appliance","Accepted" `
-                -Caption "Eula Staus"
+                try {
+                    $eula=Get-OVEulaStatus -Appliance $connection | Select-Object @{Name='Appliance';Expression={$_.appliance}},`
+                    @{Name='Accepted';Expression={$_.Accepted}}
+                    if(!$eula){
+                        throw
+                    }
+                    Table -Name 'Eula Status' -InputObject $eula -Columns "Appliance","Accepted" -ColumnWidths "50","50" -Headers "Appliance","Accepted" `
+                    -Caption "Eula Staus"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no EULA Status information available."
+                    Paragraph "There is no EULA Status information available." -Bold
+                }
             }
 
             # Section 11
@@ -810,11 +1027,20 @@ function get-asbuilt {
             BlankLine
 
             Section -Style Heading2 "12.1 Health status"{
-                $health_allproperty=Get-OVHealthStatus -ApplianceConnection $connection | Select-Object *
-                $health=$health_allproperty | Select-Object @{Name='Resource';Expression={$_.resourcetype}},@{Name='Available';Expression={$_.available}},`
-                @{Name='Capacity';Expression={$_.Capacity}},@{Name='Status';Expression={$_.statusmessage}}
-                Table -Name 'Health Status' -InputObject $health -Columns "Resource","Available","Capacity","Status" -ColumnWidths "20","20","20","40"`
-                -Headers "Resource","Available","Capacity","Status" -Caption "Health Status"
+                try {
+                    $health_allproperty=Get-OVHealthStatus -ApplianceConnection $connection | Select-Object *
+                    if(!$health_allproperty){
+                        throw
+                    }
+                    $health=$health_allproperty | Select-Object @{Name='Resource';Expression={$_.resourcetype}},@{Name='Available';Expression={$_.available}},`
+                    @{Name='Capacity';Expression={$_.Capacity}},@{Name='Status';Expression={$_.statusmessage}}
+                    Table -Name 'Health Status' -InputObject $health -Columns "Resource","Available","Capacity","Status" -ColumnWidths "20","20","20","40"`
+                    -Headers "Resource","Available","Capacity","Status" -Caption "Health Status"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no health status information available."
+                    Paragraph "There is no health status information available." -Bold
+                }
             }
 
             # Section 13
@@ -823,34 +1049,61 @@ function get-asbuilt {
             BlankLine
 
             Section -Style Heading2 "13.1 Device details"{
-                $device_details_allproperty=get-ovserver -ApplianceConnection $connection | Select-Object *
-                $device_details=$device_details_allproperty | Select-Object @{Name='Name';Expression={$_.name}},`
-                @{Name='Servername';Expression={$_.Servername}},@{Name='State';Expression={$_.status}},@{Name='Power';Expression={$_.powerstate}},`
-                @{Name='Serial Number';Expression={$_.serialNumber}},@{Name='Model';Expression={$_.model}},@{Name='ROM';Expression={$_.romversion}},`
-                @{Name='iLO';Expression={$_.mpmodel}},@{Name='iLO Version';Expression={$_.mpFirmwareVersion}},`
-                @{Name='license';Expression={$_.licensingintent}}
-                Table -Name 'Server details' -InputObject $device_details -Columns "Name","Servername","State","Power","Serial Number","Model",`
-                "ROM","iLO","iLO Version","License" -ColumnWidths "10","10","10","10","10","10","10","10","10","10" -Headers "Name","Servername",`
-                "State","Power","Serial Number","Model","ROM","iLO","iLO Version","License" -Caption "Device Details"
+                try {
+                    $device_details_allproperty=get-ovserver -ApplianceConnection $connection | Select-Object *
+                    if(!$device_details_allproperty){
+                        throw
+                    }
+                    $device_details=$device_details_allproperty | Select-Object @{Name='Name';Expression={$_.name}},`
+                    @{Name='Servername';Expression={$_.Servername}},@{Name='State';Expression={$_.status}},@{Name='Power';Expression={$_.powerstate}},`
+                    @{Name='Serial Number';Expression={$_.serialNumber}},@{Name='Model';Expression={$_.model}},@{Name='ROM';Expression={$_.romversion}},`
+                    @{Name='iLO';Expression={$_.mpmodel}},@{Name='iLO Version';Expression={$_.mpFirmwareVersion}},`
+                    @{Name='license';Expression={$_.licensingintent}}
+                    Table -Name 'Server details' -InputObject $device_details -Columns "Name","Servername","State","Power","Serial Number","Model",`
+                    "ROM","iLO","iLO Version","License" -ColumnWidths "10","10","10","10","10","10","10","10","10","10" -Headers "Name","Servername",`
+                    "State","Power","Serial Number","Model","ROM","iLO","iLO Version","License" -Caption "Device Details"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no device details information available."
+                    Paragraph "There is no device details information available." -Bold
+                }
             }
 
             Section -Style Heading2 "13.2 Server Hardware type"{
-                $server_hardware_allproperty=Get-OVServerHardwareType -ApplianceConnection $connection | Select-Object *
-                $server_hardware=$server_hardware_allproperty | Select-Object @{Name='Name';Expression={$_.name}},`
-                @{Name='type';Expression={$_.type}},@{Name='Created';Expression={$_.created}},@{Name='Modified';Expression={$_.modified}},`
-                @{Name='Form factor';Expression={$_.formfactor}},@{Name='Adaptors';Expression={$_.Adaptors -join ","}}
-                Table -Name 'Hardware type' -InputObject $server_hardware -Columns "Name","Type","Created","Modified","Form factor",`
-                "Adaptors" -ColumnWidths "16","16","16","16","16","16" -Headers "Name","Type","Created","Modified","Form factor",`
-                "Adaptors" -Caption "Hardware Types"
+                try {
+                    $server_hardware_allproperty=Get-OVServerHardwareType -ApplianceConnection $connection | Select-Object *
+                    if(!$server_hardware_allproperty){
+                        throw
+                    }
+                    $server_hardware=$server_hardware_allproperty | Select-Object @{Name='Name';Expression={$_.name}},`
+                    @{Name='type';Expression={$_.type}},@{Name='Created';Expression={$_.created}},@{Name='Modified';Expression={$_.modified}},`
+                    @{Name='Form factor';Expression={$_.formfactor}},@{Name='Adaptors';Expression={$_.Adaptors -join ","}}
+                    Table -Name 'Hardware type' -InputObject $server_hardware -Columns "Name","Type","Created","Modified","Form factor",`
+                    "Adaptors" -ColumnWidths "16","16","16","16","16","16" -Headers "Name","Type","Created","Modified","Form factor",`
+                    "Adaptors" -Caption "Hardware Types"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no server hardware type information available."
+                    Paragraph "There is no server hardware type information available." -Bold
+                }
             }
 
             Section -Style Heading2 "13.3 NTP Configuration"{
-                $ntp_allproperty=Get-OVServerNTPConfiguration -ApplianceConnection $connection | select-object *
-                $ntp=$ntp_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='Name';Expression={$_.Name}},@{Name='Created';Expression={$_.created}},@{Name='Modified';Expression={$_.modified}},`
-                @{Name='Value';Expression={$_.value}}
-                Table -Name 'NTP Configuration' -InputObject $ntp -Columns "Appliance","Name","Created","Modified","Value" `
-                -ColumnWidths "20","20","20","20","20" -Headers "Appliance","Name","Created","Modified","Value" -Caption "NTP Configuration"
+                try {
+                    $ntp_allproperty=Get-OVServerNTPConfiguration -ApplianceConnection $connection | select-object *
+                    if(!$ntp_allproperty){
+                        throw
+                    }
+                    $ntp=$ntp_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='Name';Expression={$_.Name}},@{Name='Created';Expression={$_.created}},@{Name='Modified';Expression={$_.modified}},`
+                    @{Name='Value';Expression={$_.value}}
+                    Table -Name 'NTP Configuration' -InputObject $ntp -Columns "Appliance","Name","Created","Modified","Value" `
+                    -ColumnWidths "20","20","20","20","20" -Headers "Appliance","Name","Created","Modified","Value" -Caption "NTP Configuration"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no NTP Configuration information available."
+                    Paragraph "There is no NTP Configuration information available." -Bold
+                }
             }
 
             Section -Style Heading2 "13.4 Server Profile"{
@@ -879,6 +1132,9 @@ function get-asbuilt {
             Section -Style Heading2 "14.1 Remote Support"{
                 try {
                     $remote_support_allproperty=Get-OVRemoteSupport -ApplianceConnection $connection | Select-Object *
+                    if(!$remote_support_allproperty){
+                        throw
+                    }
                     $remote_support=$remote_support_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
                     @{Name='Registered';Expression={$_.Registered}},@{Name='Enabled';Expression={$_.enabled}},@{Name='Connected';Expression={$_.connected}},`
                     @{Name='Company';Expression={$_.companyname}},@{Name='Created';Expression={$_.created}},@{Name='Modified';Expression={$_.modified}}
@@ -895,6 +1151,9 @@ function get-asbuilt {
             Section -Style Heading2 "14.2 Remote Support Contact"{
                 try {
                     $rs_contact_allproperty=Get-OVRemoteSupportContact -ApplianceConnection $connection | Select-Object *
+                    if(!$rs_contact_allproperty){
+                        throw
+                    }
                     $rs_contact=$rs_contact_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
                     @{Name='Name';Expression={$_.firstname+" "+$_.lastname}},@{Name='Email';Expression={$_.email}},@{Name='Phone';Expression={$_.primaryphone}},`
                     @{Name='Default';Expression={$_.default}}
@@ -910,6 +1169,9 @@ function get-asbuilt {
             Section -Style Heading2 "14.3 Remote Support Data Collection Schedule"{
                 try {
                     $dc_schedule_allproperty=Get-OVRemoteSupportDataCollectionSchedule -ApplianceConnection $Connection | Select-Object *
+                    if(!$dc_schedule_allproperty){
+                        throw
+                    }
                     $dc_schedule=$dc_schedule_allproperty | Select-Object @{Name='Schedule Name';Expression={$_.schedulename}},`
                     @{Name='Repeat Option';Expression={$_.Repeatoption}},@{Name='Hour';Expression={$_.hourofday}},@{Name='Minute';Expression={$_.minute}},`
                     @{Name='Day of Month';Expression={$_.dayofmonth}},@{Name='Day of week';Expression={$_.dayofweek}}
@@ -924,15 +1186,24 @@ function get-asbuilt {
             }
 
             Section -Style Heading2 "14.4 Remote Suport Default Site"{
-                $rs_defaultsite_allproperty=Get-OVRemoteSupportDefaultSite -ApplianceConnection $connection | select-object *
-                $rs_defaultsite=$rs_defaultsite_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='Street Address1';Expression={$_.Streetaddress1}},@{Name='Street Address2';Expression={$_.Streetaddress2}},`
-                @{Name='Province State';Expression={$_.provincestate}},@{Name='Postal Code';Expression={$_.Postalcode}},`
-                @{Name='Country';Expression={$_.Countrycode}},@{Name='TimeZone';Expression={$_.timezone}}
-                Table -Name 'Remote Suport Default Site' -InputObject $rs_defaultsite -Columns "Appliance","Street Address1",`
-                "Street Address2","Province State","Postal Code","Country","Timezone" -ColumnWidths "14","14","14","14","14","14","14" `
-                -Headers "Appliance","Street Address1","Street Address2","Province State","Postal Code","Country","Timezone" `
-                -Caption "Remote Suport Default Site"
+                try {
+                    $rs_defaultsite_allproperty=Get-OVRemoteSupportDefaultSite -ApplianceConnection $connection | select-object *
+                    if(!$rs_defaultsite_allproperty){
+                        throw
+                    }
+                    $rs_defaultsite=$rs_defaultsite_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='Street Address1';Expression={$_.Streetaddress1}},@{Name='Street Address2';Expression={$_.Streetaddress2}},`
+                    @{Name='Province State';Expression={$_.provincestate}},@{Name='Postal Code';Expression={$_.Postalcode}},`
+                    @{Name='Country';Expression={$_.Countrycode}},@{Name='TimeZone';Expression={$_.timezone}}
+                    Table -Name 'Remote Suport Default Site' -InputObject $rs_defaultsite -Columns "Appliance","Street Address1",`
+                    "Street Address2","Province State","Postal Code","Country","Timezone" -ColumnWidths "14","14","14","14","14","14","14" `
+                    -Headers "Appliance","Street Address1","Street Address2","Province State","Postal Code","Country","Timezone" `
+                    -Caption "Remote Suport Default Site"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no remote support default site information available."
+                    Paragraph "There is no remote support default site information available." -Bold
+                }
             }
 
             Section -Style Heading2 "14.5 Remote Entitlement Status"{
@@ -964,6 +1235,9 @@ function get-asbuilt {
                         
                     }
                 }
+                if(!$support_entitlement_results){
+                    throw
+                }
                 Table -Name "Support Entitelment Status" -InputObject $support_entitlement_results -Columns 'Resource Name','Resource SN',`
                 'IsEntitled','Entitlement Package','Entitlement Status','CoverageDays','Offer End Date' -ColumnWidths "14","14","14","14","14","14","14"`
                 -Headers 'Resource Name','Resource SN','IsEntitled','Entitlement Package','Entitlement Status','CoverageDays',`
@@ -977,22 +1251,40 @@ function get-asbuilt {
             }
             
             Section -Style Heading2 "14.6 Remote Support Partner"{
-                $remotepartner_allproperty=Get-OVRemoteSupportPartner -ApplianceConnection $connection
-                $remote_partner=$remotepartner_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='Name';Expression={$_.Name}},@{Name='Partner Type';Expression={$_.Partnertype}},@{Name='City';Expression={$_.city}},`
-                @{Name='Country';Expression={$_.country}},@{Name='Default';Expression={$_.default}}
+                try {
+                    $remotepartner_allproperty=Get-OVRemoteSupportPartner -ApplianceConnection $connection
+                    if(!$remotepartner_allproperty){
+                        throw
+                    }
+                    $remote_partner=$remotepartner_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='Name';Expression={$_.Name}},@{Name='Partner Type';Expression={$_.Partnertype}},@{Name='City';Expression={$_.city}},`
+                    @{Name='Country';Expression={$_.country}},@{Name='Default';Expression={$_.default}}
 
-                Table -Name 'Remote Support Partner' -InputObject $remote_partner -Columns "Appliance","Name","Partner type","City","Country",`
-                "Default" -ColumnWidths "16","16","16","16","16","16" -Headers "Appliance","Name","Partner type","City","Country","Default" -Caption "Remote Support Partner"
+                    Table -Name 'Remote Support Partner' -InputObject $remote_partner -Columns "Appliance","Name","Partner type","City","Country",`
+                    "Default" -ColumnWidths "16","16","16","16","16","16" -Headers "Appliance","Name","Partner type","City","Country","Default" -Caption "Remote Support Partner"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no remote support partner information available."
+                    Paragraph "There is no remote support partner information available." -Bold
+                }
             }
 
             Section -Style Heading2 "14.7 Remote Syslog"{
-                $remote_syslog_allproperty=Get-OVRemoteSyslog -ApplianceConnection $Connection | Select-Object *
-                $remote_syslog=$remote_syslog_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='Destination';Expression={$_.remoteSyslogDestination}},@{Name='Port';Expression={$_.remoteSyslogPort}},`
-                @{Name='Enabled';Expression={$_.enabled}}
-                Table -Name "Remote Syslog" -InputObject $remote_syslog -Columns "Appliance","Destination","Port",`
-                "Enabled" -ColumnWidths "25","25","25","25" -Headers "Appliance","Destination","Port","Enabled" -Caption "Remote Syslog"
+                try {
+                    $remote_syslog_allproperty=Get-OVRemoteSyslog -ApplianceConnection $Connection | Select-Object *
+                    if(!$remote_syslog_allproperty){
+                        throw
+                    }
+                    $remote_syslog=$remote_syslog_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='Destination';Expression={$_.remoteSyslogDestination}},@{Name='Port';Expression={$_.remoteSyslogPort}},`
+                    @{Name='Enabled';Expression={$_.enabled}}
+                    Table -Name "Remote Syslog" -InputObject $remote_syslog -Columns "Appliance","Destination","Port",`
+                    "Enabled" -ColumnWidths "25","25","25","25" -Headers "Appliance","Destination","Port","Enabled" -Caption "Remote Syslog"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no remote syslog information available."
+                    Paragraph "There is no remote syslog information available." -Bold
+                }
             }
 
             # Section 15
@@ -1016,19 +1308,37 @@ function get-asbuilt {
             }
 
             Section -Style Heading2 "16.2 Interconnect NTP Configuration"{
-                $ntp_config_allproperty=Get-OVInterconnectNTPConfiguration -ApplianceConnection $connection | Select-Object *
-                $ntp_config=$ntp_config_allproperty | Select-Object @{Name='Name';Expression={$_.Name}},@{Name='Value';Expression={$_.value}},`
-                @{Name='Created';Expression={$_.created}},@{Name='Modified';Expression={$_.modified}},@{Name='Group';Expression={$_.group}}
-                Table -Name 'Interconnect NTP Configuration' -InputObject $ntp_config -Columns "Name","Value","Created","Modified","Group" `
-                -ColumnWidths "20","20","20","20","20" -Headers "Name","Value","Created","Modified","Group" -Caption "Interconnect NTP Configuration"
+                try {
+                    $ntp_config_allproperty=Get-OVInterconnectNTPConfiguration -ApplianceConnection $connection | Select-Object *
+                    if(!$ntp_config_allproperty){
+                        throw
+                    }
+                    $ntp_config=$ntp_config_allproperty | Select-Object @{Name='Name';Expression={$_.Name}},@{Name='Value';Expression={$_.value}},`
+                    @{Name='Created';Expression={$_.created}},@{Name='Modified';Expression={$_.modified}},@{Name='Group';Expression={$_.group}}
+                    Table -Name 'Interconnect NTP Configuration' -InputObject $ntp_config -Columns "Name","Value","Created","Modified","Group" `
+                    -ColumnWidths "20","20","20","20","20" -Headers "Name","Value","Created","Modified","Group" -Caption "Interconnect NTP Configuration"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no Interconnect NTP configuration information available."
+                    Paragraph "There is no Interconnect NTP configuration information available." -Bold
+                }
             }
 
             Section -Style Heading2 "16.3 Interconnect Connection type"{
-                $inter_ct_allproperty=Get-OVInterconnectType -ApplianceConnection $connection | Select-Object *
-                $inter_ct=$inter_ct_allproperty | Select-Object @{Name='Name';Expression={$_.name}},@{Name='Type';Expression={$_.type}},`
-                @{Name='Part Number';Expression={$_.Partnumber}},@{Name='State';Expression={$_.state}},@{Name='Status';Expression={$_.status}}
-                Table -Name 'Interconnect Connection type' -InputObject $inter_ct -Columns "Name","Type","Part Number","State","Status" `
-                -ColumnWidths "20","20","20","20","20" -Headers "Name","Type","Part Number","State","Status" -Caption "Interconnect Connection type"
+                try {
+                    $inter_ct_allproperty=Get-OVInterconnectType -ApplianceConnection $connection | Select-Object *
+                    if(!$inter_ct_allproperty){
+                        throw
+                    }
+                    $inter_ct=$inter_ct_allproperty | Select-Object @{Name='Name';Expression={$_.name}},@{Name='Type';Expression={$_.type}},`
+                    @{Name='Part Number';Expression={$_.Partnumber}},@{Name='State';Expression={$_.state}},@{Name='Status';Expression={$_.status}}
+                    Table -Name 'Interconnect Connection type' -InputObject $inter_ct -Columns "Name","Type","Part Number","State","Status" `
+                    -ColumnWidths "20","20","20","20","20" -Headers "Name","Type","Part Number","State","Status" -Caption "Interconnect Connection type"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no Interconnect connection type information available."
+                    Paragraph "There is no Interconnect connection type information available." -Bold
+                }
             }
 
             # Section 17
@@ -1048,31 +1358,58 @@ function get-asbuilt {
             BlankLine
 
             Section -Style Heading2 "18.1 Oneview Ldap"{
-                $ldap_allproperty=Get-OVLdap -ApplianceConnection $connection | Select-Object *
-                $ldap=$ldap_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='Local login';Expression={$_.AllowLocalLogin}},@{Name='Default Directory';Expression={$_.defaultlogindomain.name}},`
-                @{Name='Directories';Expression={$_.configuredlogindomains.name -join ","}},@{Name='Login Message';Expression={$_.loginmessage.message}}
-                Table -Name 'Oneview Ldap' -InputObject $ldap -Columns "Appliance","Local login","Default directory","Directories","Login Message"`
-                 -ColumnWidths "20","20","20","20","20" `
-                 -Headers "Appliance","Local login","Default directory","Directories","Login Message" -Caption "Oneview Ldap"
+                try {
+                    $ldap_allproperty=Get-OVLdap -ApplianceConnection $connection | Select-Object *
+                    if(!$ldap_allproperty){
+                        throw
+                    }
+                    $ldap=$ldap_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='Local login';Expression={$_.AllowLocalLogin}},@{Name='Default Directory';Expression={$_.defaultlogindomain.name}},`
+                    @{Name='Directories';Expression={$_.configuredlogindomains.name -join ","}},@{Name='Login Message';Expression={$_.loginmessage.message}}
+                    Table -Name 'Oneview Ldap' -InputObject $ldap -Columns "Appliance","Local login","Default directory","Directories","Login Message"`
+                    -ColumnWidths "20","20","20","20","20" `
+                    -Headers "Appliance","Local login","Default directory","Directories","Login Message" -Caption "Oneview Ldap"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no Oneview Ldap information available."
+                    Paragraph "There is no Oneview Ldap information available." -Bold
+                }
             }
 
             Section -Style Heading2 "18.2 Ldap Directory"{
-                $ldap_dir_allproperty=Get-OVLdapDirectory -ApplianceConnection $connection | Select-Object *
-                $ldap_dir=$ldap_dir_allproperty | Select-Object @{Name='Name';Expression={$_.name}},@{Name='Type';Expression={$_.type}},`
-                @{Name='BaseDN';Expression={$_.basedn}},@{Name='Directory Servers';Expression={$_.directoryservers.directoryserveripaddress+":"+`
-                $_.directoryservers.directoryserversslportnumber}},@{Name='Status';Expression={$_.directoryservers.serverstatus}}
-                Table -Name 'Ldap Directory' -InputObject $ldap_dir -Columns "Name","Type","BaseDN","Directory servers","Status" `
-                -ColumnWidths "20","20","20","20","20" -Headers "Name","Type","BaseDN","Directory servers","Status" -Caption "Ldap Directory"
+                try {
+                    $ldap_dir_allproperty=Get-OVLdapDirectory -ApplianceConnection $connection | Select-Object *
+                    if($!$ldap_dir_allproperty){
+                        throw
+                    }
+                    $ldap_dir=$ldap_dir_allproperty | Select-Object @{Name='Name';Expression={$_.name}},@{Name='Type';Expression={$_.type}},`
+                    @{Name='BaseDN';Expression={$_.basedn}},@{Name='Directory Servers';Expression={$_.directoryservers.directoryserveripaddress+":"+`
+                    $_.directoryservers.directoryserversslportnumber}},@{Name='Status';Expression={$_.directoryservers.serverstatus}}
+                    Table -Name 'Ldap Directory' -InputObject $ldap_dir -Columns "Name","Type","BaseDN","Directory servers","Status" `
+                    -ColumnWidths "20","20","20","20","20" -Headers "Name","Type","BaseDN","Directory servers","Status" -Caption "Ldap Directory"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no Ldap Directory information available."
+                    Paragraph "There is no Ldap Directory information available." -Bold
+                }
             }
 
             Section -Style Heading2 "18.3 Ldap Group"{
-                $ldap_group_allproperty=Get-OVLdapGroup -ApplianceConnection $connection | Select-Object *
-                $ldap_group=$ldap_group_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='Name';Expression={$_.egroup}},@{Name='Directory';Expression={$_.logindomain}},`
-                @{Name='Permissions';Expression={$_.permissions.rolename}}
-                Table -Name 'Ldap Group' -InputObject $ldap_group -Columns "Appliance","Name","Directory","Permissions" `
-                -ColumnWidths "20","20","20","40" -Headers "Appliance","Name","Directory","Permissions" -Caption "Ldap Group"
+                try {
+                    $ldap_group_allproperty=Get-OVLdapGroup -ApplianceConnection $connection | Select-Object *
+                    if(!$ldap_group_allproperty){
+                        throw
+                    }
+                    $ldap_group=$ldap_group_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='Name';Expression={$_.egroup}},@{Name='Directory';Expression={$_.logindomain}},`
+                    @{Name='Permissions';Expression={$_.permissions.rolename}}
+                    Table -Name 'Ldap Group' -InputObject $ldap_group -Columns "Appliance","Name","Directory","Permissions" `
+                    -ColumnWidths "20","20","20","40" -Headers "Appliance","Name","Directory","Permissions" -Caption "Ldap Group"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no ldap group information available."
+                    Paragraph "There is no ldap group information available." -Bold
+                }
             }
 
             # Section 19
@@ -1081,12 +1418,21 @@ function get-asbuilt {
             BlankLine
 
             Section -Style Heading2 "19.1 License"{
-                $license_allproperty=Get-OVLicense -ApplianceConnection $connection | Select-Object *
-                $license=$license_allproperty | Select-Object @{Name='Product';Expression={$_.product}},@{Name='Type';Expression={$_.type}},`
-                @{Name='Capacity';Expression={$_.Capacity}},@{Name='Allocated';Expression={$_.Allocated}},`
-                @{Name='Available';Expression={$_.available}},@{Name='Nodes';Expression={$_.Nodes}}
-                Table -Name 'License' -InputObject $license -Columns "Product","Type","Capacity","Allocated","Available","Nodes" `
-                -ColumnWidths "16","16","16","16","16","16" -Headers "Product","Type","Capacity","Allocated","Available","Nodes" -Caption "License"
+                try {
+                    $license_allproperty=Get-OVLicense -ApplianceConnection $connection | Select-Object *
+                    if(!$license_allproperty){
+                        throw
+                    }
+                    $license=$license_allproperty | Select-Object @{Name='Product';Expression={$_.product}},@{Name='Type';Expression={$_.type}},`
+                    @{Name='Capacity';Expression={$_.Capacity}},@{Name='Allocated';Expression={$_.Allocated}},`
+                    @{Name='Available';Expression={$_.available}},@{Name='Nodes';Expression={$_.Nodes}}
+                    Table -Name 'License' -InputObject $license -Columns "Product","Type","Capacity","Allocated","Available","Nodes" `
+                    -ColumnWidths "16","16","16","16","16","16" -Headers "Product","Type","Capacity","Allocated","Available","Nodes" -Caption "License"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no license information available."
+                    Paragraph "There is no license information available." -Bold
+                }
             }
 
             # Section 20
@@ -1095,10 +1441,19 @@ function get-asbuilt {
             BlankLine
 
             Section -Style Heading2 "20.1 Login Message"{
-                $loginmessage=Get-OVLoginMessage -ApplianceConnection $connection | Select-Object *
-                $lm=$loginmessage.message
-                Paragraph "$($lm)" -Bold
-                #Table -Name '' -InputObject -Columns -ColumnWidths -Headers -Caption
+                try {
+                    $loginmessage=Get-OVLoginMessage -ApplianceConnection $connection | Select-Object *
+                    if(!$loginmessage){
+                        throw
+                    }
+                    $lm=$loginmessage.message
+                    Paragraph "$($lm)" -Bold
+                    #Table -Name '' -InputObject -Columns -ColumnWidths -Headers -Caption
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no login message information available."
+                    Paragraph "There is no login message information available." -Bold
+                }
             }
 
             # Section 21
@@ -1146,11 +1501,20 @@ function get-asbuilt {
             BlankLine
 
             Section -Style Heading2 "24.1 xAPI version"{
-                $xapiversion_allproperty=Get-OVXApiVersion -ApplianceConnection $connection | Select-Object *
-                $xapiversion=$xapiversion_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
-                @{Name='Current Version';Expression={$_.currentversion}},@{Name='Minimum Version';Expression={$_.minimumversion}}
-                Table -Name 'xAPI version' -InputObject $xapiversion -Columns "Appliance","Current version","Minimum version" `
-                -ColumnWidths "20","30","30" -Headers "Appliance","Current version","Minimum version" -Caption "xAPI version"
+                try {
+                    $xapiversion_allproperty=Get-OVXApiVersion -ApplianceConnection $connection | Select-Object *
+                    if(!$xapiversion_allproperty){
+                        throw
+                    }
+                    $xapiversion=$xapiversion_allproperty | Select-Object @{Name='Appliance';Expression={$_.ApplianceConnection}},`
+                    @{Name='Current Version';Expression={$_.currentversion}},@{Name='Minimum Version';Expression={$_.minimumversion}}
+                    Table -Name 'xAPI version' -InputObject $xapiversion -Columns "Appliance","Current version","Minimum version" `
+                    -ColumnWidths "20","30","30" -Headers "Appliance","Current version","Minimum version" -Caption "xAPI version"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no xAPI information available."
+                    Paragraph "There is no xAPI information available." -Bold
+                }
             }
 
             # Section 25
@@ -1159,16 +1523,25 @@ function get-asbuilt {
             BlankLine
 
             Section -Style Heading2 "25.1 Oneview Version"{
-                $ovversion_allproperty=Get-OVVersion -ApplianceConnection $connection | Select-Object *
-                $name=$connection.name
-                $ovversion=$ovversion_allproperty | Select-Object `
-                @{Name='Appliance Version';Expression={[string]$($_.$name.applianceversion.major)+"."+[string]$($_.$name.applianceversion.minor)`
-                +"."+[string]$($_.$name.applianceversion.build)+"."+[string]$($_.$name.applianceversion.revision)+"."+`
-                [string]$($_.$name.applianceversion.patch)}},`
-                @{Name='Model Number';Expression={$_.$name.modelnumber}},@{Name='Library Version';Expression={$_.libraryversion}},
-                @{Name='Path';Expression={$_.path}}
-                Table -Name 'Oneview Version' -InputObject $ovversion -Columns "Appliance Version","Model Number","Library version","Path" `
-                -ColumnWidths "20","30","30","20" -Headers "Appliance Version","Model Number","Library version","Path" -Caption "Oneview Version"
+                try {
+                    $ovversion_allproperty=Get-OVVersion -ApplianceConnection $connection | Select-Object *
+                    if(!$ovversion_allproperty){
+                        throw
+                    }
+                    $name=$connection.name
+                    $ovversion=$ovversion_allproperty | Select-Object `
+                    @{Name='Appliance Version';Expression={[string]$($_.$name.applianceversion.major)+"."+[string]$($_.$name.applianceversion.minor)`
+                    +"."+[string]$($_.$name.applianceversion.build)+"."+[string]$($_.$name.applianceversion.revision)+"."+`
+                    [string]$($_.$name.applianceversion.patch)}},`
+                    @{Name='Model Number';Expression={$_.$name.modelnumber}},@{Name='Library Version';Expression={$_.libraryversion}},
+                    @{Name='Path';Expression={$_.path}}
+                    Table -Name 'Oneview Version' -InputObject $ovversion -Columns "Appliance Version","Model Number","Library version","Path" `
+                    -ColumnWidths "20","30","30","20" -Headers "Appliance Version","Model Number","Library version","Path" -Caption "Oneview Version"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no Oneview version information available."
+                    Paragraph "There is no Oneview version information available." -Bold
+                }
             }
 
             
@@ -1178,11 +1551,20 @@ function get-asbuilt {
             BlankLine
 
             Section -Style Heading2 "26.1 Users"{
-                $user_allproperty=Get-OVuser -applianceconnection $connection | Select-Object *
-                $user=$user_allproperty | select-object @{Name='Name';Expression={$_.username}},@{Name='Enabled';Expression={$_.enabled}},`
-                @{Name='Role';Expression={$_.permissions.rolename}},@{Name='Email';Expression={$_.emailaddress}}
-                Table -Name 'User information' -InputObject $user -Columns "Name","Enabled","Role","Email" -ColumnWidths "25","25","25","25"`
-                -Headers "Name","Enabled","Role","Email" -Caption "User information"
+                try {
+                    $user_allproperty=Get-OVuser -applianceconnection $connection | Select-Object *
+                    if(!$user_allproperty){
+                        throw
+                    }
+                    $user=$user_allproperty | select-object @{Name='Name';Expression={$_.username}},@{Name='Enabled';Expression={$_.enabled}},`
+                    @{Name='Role';Expression={$_.permissions.rolename}},@{Name='Email';Expression={$_.emailaddress}}
+                    Table -Name 'User information' -InputObject $user -Columns "Name","Enabled","Role","Email" -ColumnWidths "25","25","25","25"`
+                    -Headers "Name","Enabled","Role","Email" -Caption "User information"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no user information available."
+                    Paragraph "There is no user information available." -Bold
+                }
             }
 
             # Section 27
@@ -1214,14 +1596,23 @@ function get-asbuilt {
             BlankLine
 
             Section -Style Heading2 "29.1 Oneview task status - 5 Days"{
-                $ovtask_allproperty=get-ovtask -applianceconnection $connection | select-object *
-                $ovtask=$ovtask_allproperty | Where-Object {[datetime]$_.created -gt (get-date).adddays(-5)} |`
-                select-object @{Name='Name';Expression={$_.name}},@{Name='Owner';Expression={$_.Owner}},@{Name='created';Expression={$_.created}},`
-                @{Name='Duration';Expression={$_.expectedduration}},@{Name='Task State';Expression={$_.TaskState}},`
-                @{Name='Percent Complete';Expression={$_.percentcomplete}}
-                Table -Name 'Oneview task status' -InputObject $ovtask -Columns "Name","Owner","Created","Duration","Task State","Percent Complete" `
-                -ColumnWidths "16","16","16","16","16","16" -Headers "Name","Owner","Created","Duration","Task State","Percent Complete" `
-                -Caption "Oneview task status"
+                try {
+                    $ovtask_allproperty=get-ovtask -applianceconnection $connection | select-object *
+                    if(!$ovtask_allproperty){
+                        throw
+                    }
+                    $ovtask=$ovtask_allproperty | Where-Object {[datetime]$_.created -gt (get-date).adddays(-5)} |`
+                    select-object @{Name='Name';Expression={$_.name}},@{Name='Owner';Expression={$_.Owner}},@{Name='created';Expression={$_.created}},`
+                    @{Name='Duration';Expression={$_.expectedduration}},@{Name='Task State';Expression={$_.TaskState}},`
+                    @{Name='Percent Complete';Expression={$_.percentcomplete}}
+                    Table -Name 'Oneview task status' -InputObject $ovtask -Columns "Name","Owner","Created","Duration","Task State","Percent Complete" `
+                    -ColumnWidths "16","16","16","16","16","16" -Headers "Name","Owner","Created","Duration","Task State","Percent Complete" `
+                    -Caption "Oneview task status"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no oneview task status information available."
+                    Paragraph "There is no oneview task status information available." -Bold
+                }
             }
             
             # Section 30
@@ -1236,13 +1627,22 @@ function get-asbuilt {
             }
 
             Section -Style Heading2 "30.2 Switch type information"{
-                $switch_allproperty=get-ovswitchtype -applianceconnection $connection | select-object *
-                $switchtype=$switch_allproperty | select-object @{Name='Name';Expression={$_.name}},@{Name='Part Number';Expression={$_.partnumber}},`
-                @{Name='Minimum firmware version';Expression={$_.minimumfirmwareversion}},`
-                @{Name='Maximum firmware version';Expression={$_.MaximumFirmareVersion}}
-                Table -Name 'Switch type' -InputObject $switchtype -Columns "Name","Part number","Minimum firmware version","Maximum firmware version"`
-                -ColumnWidths "20","20","40","20" -Headers "Name","Part number","Minimum firmware version","Maximum firmware version" `
-                -Caption "Switch types"
+                try {
+                    $switch_allproperty=get-ovswitchtype -applianceconnection $connection | select-object *
+                    if(!$switch_allproperty){
+                        throw
+                    }
+                    $switchtype=$switch_allproperty | select-object @{Name='Name';Expression={$_.name}},@{Name='Part Number';Expression={$_.partnumber}},`
+                    @{Name='Minimum firmware version';Expression={$_.minimumfirmwareversion}},`
+                    @{Name='Maximum firmware version';Expression={$_.MaximumFirmareVersion}}
+                    Table -Name 'Switch type' -InputObject $switchtype -Columns "Name","Part number","Minimum firmware version","Maximum firmware version"`
+                    -ColumnWidths "20","20","40","20" -Headers "Name","Part number","Minimum firmware version","Maximum firmware version" `
+                    -Caption "Switch types"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no switch type information available."
+                    Paragraph "There is no switch type information available." -Bold
+                }
             }
 
             # Section 31
@@ -1251,13 +1651,22 @@ function get-asbuilt {
             BlankLine
 
             Section -Style Heading2 "31.1 Oneview SPP File"{
-                $sppfile_allproperty=get-ovsppfile -applianceconnection $connection | select-object *
-                $sppfile= $sppfile_allproperty | select-object @{Name='Name';Expression={$_.name}},@{Name='State';Expression={$_.state}},`
-                @{Name='Status';Expression={$_.status}},@{Name='Version';Expression={$_.version}},@{Name='ISOFileName';Expression={$_.isofilename}},`
-                @{Name='XMLkeyName';Expression={$_.XMLKeyName}},@{Name='BundleSize';Expression={$_.bundlesize}}
-                Table -Name 'Oneview SPP File' -InputObject $sppfile -Columns "Name","State","Status","Version","ISOFileName","XMLKeyName","BundleSize"`
-                -ColumnWidths "14","14","14","14","14","14","14" -Headers "Name","State","Status","Version","ISOFileName",`
-                "XMLKeyName","BundleSize" -Caption "Oneview SPP File"
+                try {
+                    $sppfile_allproperty=get-ovsppfile -applianceconnection $connection | select-object *
+                    if(!$sppfile_allproperty){
+                        throw
+                    }
+                    $sppfile= $sppfile_allproperty | select-object @{Name='Name';Expression={$_.name}},@{Name='State';Expression={$_.state}},`
+                    @{Name='Status';Expression={$_.status}},@{Name='Version';Expression={$_.version}},@{Name='ISOFileName';Expression={$_.isofilename}},`
+                    @{Name='XMLkeyName';Expression={$_.XMLKeyName}},@{Name='BundleSize';Expression={$_.bundlesize}}
+                    Table -Name 'Oneview SPP File' -InputObject $sppfile -Columns "Name","State","Status","Version","ISOFileName","XMLKeyName","BundleSize"`
+                    -ColumnWidths "14","14","14","14","14","14","14" -Headers "Name","State","Status","Version","ISOFileName",`
+                    "XMLKeyName","BundleSize" -Caption "Oneview SPP File"
+                }
+                catch {
+                    Write-PScriboMessage -Message "There is no oneview spp file information available."
+                    Paragraph "There is no oneview spp file information available." -Bold
+                }
             }
 
             # Section 32
@@ -1285,6 +1694,9 @@ function get-asbuilt {
             Section -Style Heading2 "33.1 Oneview Profile"{
                 try {
                     $ovprofile_allproperty=get-ovprofile -applianceconnection $connection | select-object *
+                    if(!$ovprofile_allproperty){
+                        throw
+                    }
                     $ovprofile =$ovprofile_allproperty | select-object @{Name='Name';Expression={$_.name}},@{Name='Status';Expression={$_.status}},`
                     @{Name='Compliance';Expression={$_.templateCompliance}},@{Name='Type';Expression={$_.type}},@{Name='Created';Expression={$_.created}},`
                     @{Name='Modified';Expression={$_.modified}}

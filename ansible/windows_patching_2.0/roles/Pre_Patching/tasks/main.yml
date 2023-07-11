@@ -1,0 +1,137 @@
+# PrePatching main
+
+# Start a playbook timer to calculate timespan of the playbook
+- name: Start a playbook timer
+  ansible.builtin.set_fact:
+    start_time: "{{ ansible_date_time.iso8601[:19] }}"
+  delegate_to: localhost
+  run_once: true
+
+# This task is used to create datewise folder for collection of logs
+- name: Control Node | Create datewise log folder for the playbook
+  ansible.builtin.file:
+    path: '{{ datewise }}'
+    force: true
+    state: directory
+    mode: '0755'
+    owner: '{{ ssh_user }}'
+  run_once: true
+  register: datewise
+  delegate_to: localhost
+  become: true
+
+- name: Control Node | Set path variable for the log folder
+  ansible.builtin.set_fact:
+    log_path: '{{ datewise.path }}'
+  run_once: true
+  delegate_to: localhost
+
+- name: Control Node | Create internal logs folder inside datewise
+  ansible.builtin.file:
+    path: '{{ item }}'
+    force: true
+    state: directory
+    mode: '0755'
+    owner: '{{ ssh_user }}'
+  with_items:
+    - '{{ log_path }}/reports'
+    - '{{ log_path }}/results'
+    - '{{ log_path }}/patching_status'
+    - '{{ log_path }}/services'
+  run_once: true
+  delegate_to: localhost
+  become: true
+
+- name: Control Node | create temp all hosts file in ansible controller
+  ansible.builtin.template:
+    src: all_play_hosts.j2
+    dest: '{{ log_path }}/patching_status/allhosts_temp.txt'
+    mode: '0644'
+    owner: '{{ ssh_user }}'
+  delegate_to: localhost
+  vars:
+    my_variable: '{{ ansible_play_hosts_all }}'
+  become: true
+  become_user: root
+
+- name: Control Node | create all hosts file in ansible controller
+  ansible.builtin.shell: |
+    set -o pipefail
+    cat allhosts_temp.txt | sed "s/\[u'//g; s/', u'/\n/g; s/'\]//g" >> allhosts.txt;
+    rm -rf allhosts_temp.txt
+  args:
+    chdir: "{{ log_path }}/patching_status"
+    executable: /bin/bash
+  delegate_to: localhost
+  run_once: true
+  become: true
+  changed_when: false
+
+- name: Managed Node | Clean-up previous log files
+  ansible.windows.win_file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - '{{ logs_source }}'
+    - '{{ hotfix_source }}'
+    - '{{ postprs }}'
+    - '{{ preprs }}'
+
+- name: Managed Node | Get Pre-Patching running services on windows
+  ansible.windows.win_shell: |
+    get-service | where-object {$_.status -eq "running"} | select-object name -expandproperty name | out-file c:\preprs.txt
+  register: pre_pwsh
+
+- name: Managed Node | Copy Pre-Patching running services text file back to control node
+  ansible.builtin.fetch:
+    src: "{{ preprs }}"
+    dest: '{{ log_path }}/services/{{ inventory_hostname }}_preprs.txt'
+    flat: true
+  become: true
+  register: preprs_copy
+
+- name: Managed Node | Status of copy of Pre-Patching running services file from windows
+  ansible.builtin.debug:
+    msg: "Successfully copied Pre-Patching running services file from {{ inventory_hostname }}"
+  when: preprs_copy.failed ==  false
+
+- name: Managed Node | copy template to destination windows servers
+  ansible.builtin.template:
+    src: patch-report-template.j2
+    dest: "{{ logs_source }}"
+    mode: '0644'
+  become: true
+
+- name: Managed Node | Configure the windows update and ssh service
+  ansible.windows.win_service:
+    name: "{{ item }}"
+    state: started
+    start_mode: auto
+  with_items:
+    - wuauserv
+    - ssh-agent
+  failed_when: false
+
+# run  ansible-galaxy install git+https://github.com/informatique-cdc/ansible-role-win_pending_reboot.git before executing the playbook
+- name: Managed Node | Getting pending reboot status
+  win_pending_reboot:
+  register: pending_reboot
+
+- name: Control Node | Print reboot status of windows machines
+  ansible.builtin.debug:
+    msg: Initial Reboot is required on the server {{ inventory_hostname }}
+  when: pending_reboot.reboot_required
+
+- name: Managed Node | Reboot server if required
+  ansible.windows.win_shell: restart-computer -force
+  when: pending_reboot.reboot_required
+
+- name: Managed Node | Initiate a pause for reboot
+  ansible.builtin.pause:
+    minutes: 1
+  when: pending_reboot.reboot_required
+
+- name: Managed Node | Wait for connection
+  ansible.builtin.wait_for_connection:
+    delay: 5
+    timeout: 1500

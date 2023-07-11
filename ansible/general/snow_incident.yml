@@ -1,0 +1,42 @@
+---
+- hosts: all
+  name: Create ServiceNow incident
+  gather_facts: false
+
+  tasks:
+    - name: Checking trigger of incident creation
+      block:
+        - name: Fail the playbook to trigger the handler
+          fail:
+            msg: "Ansible playbook failed. Creating SNOW ticket."
+          run_once: true
+          delegate_to: localhost
+      rescue:
+        - name: Create a test ServiceNow incident
+          servicenow.itsm.incident:
+            instance:
+              host: ""
+              username: ""
+              password: ""
+            state: new
+            impact: medium
+            urgency: medium
+            short_description: "Test incident created by Ansible"
+            description: "This is the incident created by Ansible to track failures in the patching playbook"
+          register: inc
+          run_once: true
+          delegate_to: localhost
+
+    - name: Print incident number
+      debug:
+        msg: 
+          -  "Description - {{ inc.diff.after.description}}"
+          -  "Short Description - {{ inc.diff.after.description}}"
+          -  "Number - {{ inc.diff.after.number }}"
+          -  "Created on - {{ inc.diff.after.number }}"
+          -  "Created By - {{ inc.diff.after.sys_created_by}}"
+          -  "Impact - {{ inc.diff.after.impact }}"
+          -  "Priority - {{ inc.diff.after.priority }}"
+          
+      run_once: true
+      delegate_to: localhost

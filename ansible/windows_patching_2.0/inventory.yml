@@ -1,0 +1,9 @@
+[nodes]
+node1 ansible_shell_type=sh ansible_host=172.17.0.2 ansible_user=root
+node2 ansible_shell_type=sh ansible_host=172.17.0.3 ansible_user=root
+
+[cicd]
+jenkins ansible_shell_type=sh ansible_host=172.17.0.5 ansible_user=root
+
+[windows]
+winclient ansible_shell_type=cmd ansible_host=20.51.168.171 ansible_user=root

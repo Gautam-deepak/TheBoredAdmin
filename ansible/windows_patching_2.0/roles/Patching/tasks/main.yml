@@ -1,0 +1,91 @@
+# Patching main
+
+- name: Managed Node | Install all available patches with 3 retries
+  ansible.windows.win_updates:
+    category_names:
+      - Security Updates
+      - Critical Updates
+      - Updates
+      - Windows Server 2016
+      - Windows Server 2019
+      - Windows Server 2012 R2
+      - Windows Server 2022
+    reboot: false
+    log_path: "{{ logs_source }}"
+  register: update_count
+  retries: 5
+  delay: 300
+  until: update_count.failed == false
+
+- name: Managed Node | Post-Installation - Getting pending reboot status
+  win_pending_reboot:
+  register: post_pending_reboot
+
+- name: Control Node | Post-Installation - Print reboot status of windows machines
+  ansible.builtin.debug:
+    msg: Post Installation Reboot is required on the server {{ inventory_hostname }}
+  when: post_pending_reboot.reboot_required
+
+- name: Managed Node | Post-Installation - Reboot server if required
+  ansible.windows.win_shell: restart-computer -force
+  when: post_pending_reboot.reboot_required
+
+- name: Managed Node | Post-Installation - Initiate a pause for reboot
+  ansible.builtin.pause:
+    minutes: 1
+  when: post_pending_reboot.reboot_required
+
+- name: Managed Node | Post-Installation - Wait for connection
+  ansible.builtin.wait_for_connection:
+    delay: 5
+    timeout: 1500
+
+- name: Managed and Control Node | Collect patch report back to ansible server
+  ansible.builtin.fetch:
+    src: "{{ logs_source }}"
+    dest: "{{ log_path }}/reports/patch-report-{{ inventory_hostname }}.txt"
+    flat: true
+  become: true
+
+- name: Control Node | Generating final Patch report
+  ansible.builtin.shell: "cat {{ log_path }}/reports/patch-report-*.txt >> {{ log_path }}/results/final-patch-report.txt"
+  run_once: true
+  become: true
+  delegate_to: localhost
+  changed_when: false
+
+- name: Control Node | Read Final Patch report's content
+  ansible.builtin.command: cat final-patch-report.txt
+  args:
+    chdir: '{{ log_path }}/results'
+  delegate_to: localhost
+  run_once: true
+  register: patchreport
+  changed_when: false
+
+- name: Control Node | Copy Installed patches to a Installed_patches.log
+  ansible.builtin.copy:
+    content: "{{ update_count | to_json }}"
+    dest: "{{ log_path }}/reports/installed_patches.log"
+    owner: '{{ ssh_user }}'
+    mode: '0644'
+  become: true
+  become_user: root
+  delegate_to: localhost
+
+- name: Control Node | Print installed patches count of managed nodes
+  ansible.builtin.debug:
+    msg: "No. of patches installed on {{ inventory_hostname }}: {{ update_count.installed_update_count }}"
+  failed_when: false
+
+- name: Control Node | Printing if there are no pending updates
+  ansible.builtin.debug:
+    msg: "The server {{ inventory_hostname }} is successfully patched and there are no pending updates."
+  when: update_count.found_update_count == update_count.installed_update_count
+  failed_when: false
+
+- name: Control Node | Printing if some updates are left to be installed
+  ansible.builtin.debug:
+    msg: "The server {{ inventory_hostname }} is not fully patched."
+  when: update_count is undefined or update_count.found_update_count != update_count.installed_update_count
+  failed_when: false

@@ -1,0 +1,12 @@
+---
+- hosts: all
+  name: Display message based on certain condition using assert
+  gather_facts: true
+  tasks:
+
+    -  name: Test ansible os family from gather gather_facts
+       ansible.builtin.assert:
+         that: 
+           - "ansible_os_family != 'CentOS'"
+         fail_msg: "'ansible_os_family' is CentOS, requirement not met."
+         success_msg: "'ansible_os_family' is not CentOS, requirement met."

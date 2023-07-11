@@ -1,0 +1,30 @@
+---
+- hosts: all
+  gather_facts: false
+  name: Run PowerShell script to create windows patching report
+  vars:
+      current_date: "{{ lookup('pipe', 'date +%Y%m%d-%H%M%S') }}"
+      logs_folder: '/home/itoc_ansible_admin/logs' # must be changed based on domain user
+      datewise: '{{ logs_folder }}/Win_Patching_{{ current_date }}'
+
+  tasks:
+   
+    - name: run ps script 
+      shell: "/projects/ansible/test.ps1 -location /tmp/Win_Patching"
+      args:
+        executable: /snap/bin/pwsh
+      register: pwsh
+      delegate_to: localhost
+
+    - name: debug pwsh
+      debug:
+        var: pwsh
+
+    - name: copy report to nginx
+      shell: docker cp /projects/ansible/Patching_Report.html bfd8e81b3ee6:/usr/share/nginx/html/files
+      register: copy
+      delegate_to: localhost
+
+    - name: status of copy
+      debug:
+        var: copy

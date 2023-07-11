@@ -1,0 +1,67 @@
+---
+- hosts: all
+  gather_facts: true
+  name: Gather total time taken by the playbook in a variable
+  connection: local
+  vars:
+    allow_world_readable_tmpfiles: true
+    current_date: "{{ lookup('pipe', 'date +%Y%m%d-%H%M%S') }}"
+    logs_folder: '/projects/ansible/' # must be changed based on domain user
+    datewise: '{{ logs_folder }}/Win_Patching_{{ current_date }}'
+  
+  tasks:
+
+    - name: Control Node | Create datewise log folder for the playbook
+      local_action:
+        module: file
+        path: '{{ datewise }}'
+        force: yes
+        state: directory
+        mode: 0755
+      run_once: yes
+      register: datewise            #output is stored in datewise variable
+      become: yes
+
+    - name: Control Node | Set path variable for the log folder 
+      set_fact:
+        log_path: '{{ datewise.path }}'    #sets the log path to store log folder   
+      delegate_to: localhost
+      run_once: yes
+
+    - name: Start a timer
+      set_fact:
+        start_time: "{{ ansible_date_time.iso8601[:19] }}"
+      delegate_to: localhost
+      run_once: yes
+
+    - name: Pause for 5 minutes to build app cache
+      pause:
+        minutes: 5
+      delegate_to: localhost
+      run_once: yes
+
+    - name: force update of current timestamp
+      setup: filter='ansible_date_time'
+      delegate_to: localhost
+      run_once: yes
+
+    - name: Get runtime
+      set_fact:
+        runtime: "{{ ((ansible_date_time.iso8601[:19] | to_datetime('%Y-%m-%dT%H:%M:%S')) - (start_time | to_datetime('%Y-%m-%dT%H:%M:%S'))).seconds }}"
+      delegate_to: localhost
+      run_once: yes
+
+    - name: Print runtime
+      debug:
+        msg: "Total time taken for the playook is {{ runtime }} seconds"
+      delegate_to: localhost
+      run_once: yes
+
+    - name: Copy variable to a text file
+      local_action:
+        module: lineinfile
+        path: '{{ log_path }}/results/time_taken.txt'
+        line: "{{ runtime }}"
+        create: yes
+      run_once: yes
+      become: yes

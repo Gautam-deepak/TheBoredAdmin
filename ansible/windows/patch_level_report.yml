@@ -1,0 +1,126 @@
+---
+- hosts: windows
+  name: Patch level report for windows
+  gather_facts: true
+  user: root
+  become: true
+  become_method: runas
+  become_user: root # must be changed based on domain and user
+  vars:
+    allow_world_readable_tmpfiles: true
+    patching_report_script: '{{ playbook_dir }}/Patch_level_report.ps1'
+    current_date: "{{ lookup('pipe', 'date +%Y%m%d-%H%M%S') }}"
+    logs_folder: '/projects/ansible/logs' # must be changed based on domain user
+    datewise: '{{ logs_folder }}/Patching_Report_{{ current_date }}'
+    hotfix_source: 'C:\hotfix.csv'
+    last_hotfix_source: 'C:\lasthotfix.csv'
+    ssh_user: 'root' # must be changed based on domain and user
+
+  tasks:
+
+    - name: Control Node | Create datewise log folder for the playbook
+      ansible.builtin.file:
+        path: '{{ datewise }}'
+        force: true
+        state: directory
+        mode: '0755' # sets permission to file
+        owner: '{{ ssh_user }}' # sets the owner of the logs folder to be itoc_ansible_admin
+      delegate_to: localhost
+      register: datewise # output is stored in datewise variable
+      become: true
+
+    - name: Control Node | Set path variable for the log folder
+      ansible.builtin.set_fact:
+        log_path: '{{ datewise.path }}' # sets the log path to store log folder
+      delegate_to: localhost
+      changed_when: false
+
+    - name: Control Node | Create internal logs folder inside datewise
+      ansible.builtin.file:
+        path: '{{ item }}'
+        force: true
+        state: directory
+        mode: '0755'
+        owner: '{{ ssh_user }}'
+      with_items:
+        - '{{ log_path }}/results'
+        - '{{ log_path }}/reports'
+      delegate_to: localhost
+      become: true
+
+    - name: Collect hotfix information from windows
+      ansible.windows.win_shell: |
+        Get-HotFix | Select-Object Pscomputername,description,hotfixid,installedby,installedon,@{LABEL='LastBootUpTime';`
+        EXPRESSION={(Get-WmiObject win32_operatingsystem | select @{LABEL='LastBootUpTime';EXPRESSION=`
+        {$_.ConverttoDateTime($_.lastbootuptime)}}).lastbootuptime}} | Where-Object {$_.installedon.month -ge ((get-date).Month - 1) `
+        -and $_.InstalledOn.year -eq (get-date).year -and $_.description -eq "Security Update"} | Export-Csv -NoTypeInformation -Force -path C:\hotfix.csv
+
+    - name: Managed Node | Collect hotfix information
+      ansible.builtin.fetch:
+        src: "{{ hotfix_source }}"
+        dest: '{{ log_path }}/reports/{{ inventory_hostname }}_hotfix.csv'
+        flat: true
+      become: true
+
+    - name: Control Node | Generating hotfix final report
+      delegate_to: localhost
+      ansible.builtin.shell: "awk 'FNR==1 && NR!=1{next;}{print}' reports/{{ inventory_hostname }}_hotfix.csv >> results/final-hotfix.csv"
+      args:
+        chdir: "{{ log_path }}"
+      become: true
+      changed_when: false
+
+    - name: Control Node | Read final hotfix report's content
+      delegate_to: localhost
+      ansible.builtin.command: "cat {{ log_path }}/results/final-hotfix.csv"
+      register: finalhotfix
+      changed_when: false
+
+    - name: Control Node | Print final hotfix report's content
+      ansible.builtin.debug:
+        var: finalhotfix.stdout_lines
+      delegate_to: localhost
+
+    - name: Collect last hotfix information from windows
+      ansible.windows.win_shell: |
+        Get-HotFix | Select-Object Pscomputername,description,hotfixid,installedon | Where-Object {$_.description -eq "Security Update"}| `
+        Sort-Object -Descending InstalledOn | Select-Object -First 1 | Export-Csv -Path c:\lasthotfix.csv -NoTypeInformation -Force
+
+    - name: Managed Node | Collect hotfix information
+      ansible.builtin.fetch:
+        src: "{{ last_hotfix_source }}"
+        dest: '{{ log_path }}/reports/{{ inventory_hostname }}_last_hotfix.csv'
+        flat: true
+      become: true
+
+    - name: Control Node | Generating hotfix final report
+      delegate_to: localhost
+      ansible.builtin.shell: "awk 'FNR==1 && NR!=1{next;}{print}' reports/{{ inventory_hostname }}_last_hotfix.csv >> results/final-last-hotfix.csv"
+      args:
+        chdir: "{{ log_path }}"
+      become: true
+      changed_when: false
+
+    - name: Control Node | Read final hotfix report's content
+      delegate_to: localhost
+      ansible.builtin.command: "cat {{ log_path }}/results/final-last-hotfix.csv"
+      register: finallasthotfix
+      changed_when: false
+
+    - name: Control Node | Print final hotfix report's content
+      ansible.builtin.debug:
+        var: finallasthotfix.stdout_lines
+      delegate_to: localhost
+
+    - name: Control Node | Run PowerShell script to create patching report
+      ansible.builtin.shell: "{{ patching_report_script }} -location {{ log_path }}"
+      args:
+        executable: /usr/bin/pwsh
+      register: pwsh
+      delegate_to: localhost
+      changed_when: false
+
+    - name: Control Node | Print status of patching level creation
+      ansible.builtin.debug:
+        msg: "Successfully created Patch level report"
+      when: not pwsh.failed

@@ -1,0 +1,41 @@
+---
+- hosts: all
+  name: Windows Patching playbook
+  user: root
+  become: true
+  become_method: runas
+  become_user: root  # Must be changed based on domain and user
+
+  gather_facts: true
+
+  vars:
+    allow_world_readable_tmpfiles: true
+    patching_report_script: '{{ playbook_dir }}/Patching_report.ps1'
+    current_date: "{{ lookup('pipe', 'date +%Y%m%d-%H%M%S') }}"
+    logs_folder: '/projects/ansible/logs'  # Must be changed based on domain user
+    datewise: '{{ logs_folder }}/Win_Patching_{{ current_date }}'
+    hotfix_source: 'C:\hotfix.csv'
+    logs_source: 'C:\windows_updates-{{ inventory_hostname }}.txt'
+    logs_destination: '{{ reports }}/{{ inventory_hostname }}_updatelogs.txt'
+    preprs: 'C:\preprs.txt'
+    postprs: 'C:\postprs.txt'
+    patch_report: '{{ inventory_hostname }}'
+    ssh_user: 'root' # Must be changed based on domain user
+
+  pre_tasks:
+
+    - name: Print patching start message
+      ansible.builtin.debug:
+        msg: "Beginning of patching updates on Windows servers"  # Displaying a message indicating the start of patching updates
+
+  roles:
+    - ansible-role-win_pending_reboot  # Role for handling pending reboots
+    - Pre_Patching  # Role for pre-patching tasks
+    - Patching  # Role for actual patching tasks
+    - Post_Patching  # Role for post-patching tasks
+
+  post_tasks:
+
+    - name: Print patching end message
+      ansible.builtin.debug:
+        msg: "Patch update completed successfully"  # Displaying a message indicating successful completion of patch updates

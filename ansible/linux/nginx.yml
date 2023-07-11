@@ -1,0 +1,25 @@
+---
+- hosts: all
+  gather_facts: false
+  name: run powershell command
+  tasks:
+   
+    - name: run ps script 
+      shell: "/projects/ansible/test.ps1"
+      args:
+        executable: /snap/bin/pwsh
+      register: pwsh
+      delegate_to: localhost
+
+    - name: debug pwsh
+      debug:
+        var: pwsh
+
+    - name: copy report to nginx
+      shell: docker cp /projects/ansible/ReportDoc.html bfd8e81b3ee6:/usr/share/nginx/html/files
+      register: copy
+      delegate_to: localhost
+
+    - name: status of copy
+      debug:
+        var: copy

@@ -1,0 +1,36 @@
+---
+- hosts: nodes
+  name: OS Release Information
+  gather_facts: false
+  tasks:
+    - name: Get OS Release info
+      ansible.builtin.shell: cat /etc/os-release
+      args:
+        executable: /bin/bash
+      register: os_release
+      changed_when: false
+
+    - name: Print os-release info
+      ansible.builtin.debug:
+        var: os_release
+
+    - name: Find ubuntu in stdout
+      ansible.builtin.debug:
+        msg: This is an ubuntu server.
+
+    - name: Include custom message
+      ansible.builtin.shell: echo "Ubuntu"
+      args:
+        executable: /bin/bash
+      when: os_release.stdout.find('Ubuntu')
+      register: ubuntu
+      changed_when: false
+
+    - name: Debug ubuntu
+      ansible.builtin.debug:
+        var: ubuntu
+
+    - name: Debug Ubuntu status
+      ansible.builtin.debug:
+        msg: ubuntu found
+      when: ubuntu.stdout.find('Ubuntu')
