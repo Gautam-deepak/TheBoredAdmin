@@ -20,7 +20,7 @@ Describe "Testing Test-LocalFile Command" {
         }
 
         It "Should write the error message" {
-            { Test-LocalFile -FilePath 'C:\path\to\file.txt' -erroraction stop} | Should -Throw "Cannot find path 'C:\path\to\file.txt' because it does not exist."
+            { Test-LocalFile -FilePath 'C:\path\to\file.txt'} | Should -Throw "Cannot find path 'C:\path\to\file.txt' because it does not exist."
         }
     }
 }

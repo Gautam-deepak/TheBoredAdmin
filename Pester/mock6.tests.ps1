@@ -22,10 +22,10 @@ describe 'Get-Employee' {
     }
 
     It 'runs the Import-Csv command assert times' {
-        Assert-MockCalled -CommandName 'Import-Csv' -Times 2
+        Assert-MockCalled -CommandName 'Import-Csv' -Times 1
     }
 
     It 'runs the Import-Csv command assert times exactly' {
-        Assert-MockCalled -CommandName 'Import-Csv' -Times 2 -Exactly
+        Assert-MockCalled -CommandName 'Import-Csv' -Times 1 -Exactly
     }
 }

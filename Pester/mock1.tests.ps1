@@ -21,3 +21,14 @@ Describe "How to mock a function" {
         }
     }
 }
+
+Describe "Mock random"{
+    Mock get-random -mockwith { 5 }
+    Context  get-stuff{
+        it "get-stuff with random" {
+            $expected=get-stuff
+            $expected | should -be 5
+        }
+    }
+}
+

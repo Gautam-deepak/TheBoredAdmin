@@ -1,7 +1,7 @@
 . .\mock5.ps1
 
 describe 'Get-Employee' {
-    mock 'Import-Csv' {
+    mock -CommandName 'Import-Csv' -MockWith {
         [pscustomobject]@{
             FirstName = 'Adam'
             LastName = 'Bertram'
@@ -13,5 +13,6 @@ describe 'Get-Employee' {
         $users.FirstName | should -Be 'Adam'
         $users.Lastname | should -Be 'Bertram'
         $users.UserName | should -Be 'abertram'
+    Assert-MockCalled -CommandName Import-Csv -Times 1 
     }
 }
